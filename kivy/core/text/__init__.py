@@ -72,6 +72,10 @@ class LabelBase(object):
             contents as much as possible if a `size` is given.
             Setting this to True without an appropriately set size will lead
             unexpected results.
+        `shorten_by_padding`: bool, defaults to False
+            Same a shorten except it uses padding to shorten the text. It 
+            does not add periods to the end of the string after it has 
+            been shortened.
         `mipmap` : bool, default to False
             Create mipmap for the texture
     '''
@@ -86,12 +90,13 @@ class LabelBase(object):
 
     def __init__(self, text='', font_size=12, font_name=DEFAULT_FONT,
                  bold=False, italic=False, halign='left', valign='bottom',
-                 shorten=False, text_size=None, mipmap=False, color=None,
-                 line_height=1.0, **kwargs):
+                 shorten=False, shorten_by_padding=False, text_size=None, 
+                 mipmap=False, color=None, line_height=1.0, **kwargs):
 
         options = {'text': text, 'font_size': font_size,
             'font_name': font_name, 'bold': bold, 'italic': italic,
             'halign': halign, 'valign': valign, 'shorten': shorten,
+            'shorten_by_padding': shorten_by_padding,
             'mipmap': mipmap, 'line_height': line_height}
 
         options['color'] = color or (1, 1, 1, 1)
@@ -219,6 +224,54 @@ class LabelBase(object):
             segment = max_letters - 3  # length of '...'
             return u'{0}...'.format(text[:segment].strip())
 
+    def shorten_by_padding(self, text):
+        # Just a tiny shortcut
+        textwidth = lambda txt: self.get_extents(txt)[0]
+        padding_x = self.options['padding_x']
+            
+        if self.text_size[0] is None:
+            width = 0
+        else:
+            width = int(self.text_size[0] - (padding_x * 2))
+            if width < 0:
+                width = 0
+        
+        letters = text
+        while textwidth(letters) > width:       
+            letters = letters[:-1]
+
+        segment = len(letters)
+
+        if segment < len(text):
+            return text[:segment].strip()
+        else:
+            return text
+        
+    def trim_spaces(self, lw, glyphs, cache):
+        '''
+        Pull out spaces at the beginning and end of a line
+        
+        lw: Line Width
+        glyphs: Line Characters
+        cache: Characters size cache
+        
+        returns new Line Width and glyphs
+        '''
+        lastitem = len(glyphs) - 1
+        if lastitem > 0:
+            if glyphs[lastitem] == ' ':
+                gw = cache[glyphs[lastitem]][0]
+                lw -= gw
+                del glyphs[lastitem]
+        if lastitem >= 0:
+            if glyphs[0] == ' ':
+                gw = cache[glyphs[0]][0]
+                lw -= gw
+                del glyphs[0]
+            
+        return lw, glyphs
+        
+                        
     def render(self, real=False):
         '''Return a tuple(width, height) to create the image
         with the user constraints.
@@ -284,9 +337,12 @@ class LabelBase(object):
             # Shorten the text that we actually display
             text = self.text
             last_word_width = get_extents(text[text.rstrip().rfind(' '):])[0]
-            if (options['shorten'] and get_extents(text)[0] >
-                uw - last_word_width):
-                text = self.shorten(text)
+            if ((options['shorten'] or options['shorten_by_padding']) 
+                and get_extents(text)[0] > uw - last_word_width):
+                if options['shorten']:
+                    text = self.shorten(text)
+                else:
+                    text = self.shorten_by_padding(text)
 
             # first, split lines
             glyphs = []
@@ -314,10 +370,17 @@ class LabelBase(object):
                 lh = max(wh, lh)
                 # is the word fit on the line ?
                 if (word == '\n' or x + ww > uw) and lw != 0:
+                    
+                    # Pull out spaces at the beginning and end
+                    lw, glyphs = self.trim_spaces(lw, glyphs, cache)
+                            
                     # no, push actuals glyph
                     # lw, lh), is_last_line, glyphs)
                     last_line = 1 if word == '\n' else 0
-                    lines.append(((lw, lh), last_line, glyphs))
+                    
+                    if lw > 0:
+                        lines.append(((lw, lh), last_line, glyphs))
+                        
                     glyphs = []
 
                     # reset size
