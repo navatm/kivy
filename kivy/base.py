@@ -20,6 +20,7 @@ from kivy.config import Config
 from kivy.logger import Logger
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
+from kivy.lang import Builder
 
 # private vars
 EventLoop = None
@@ -84,10 +85,9 @@ class EventLoopBase(EventDispatcher):
     '''Main event loop. This loop handle update of input + dispatch event
     '''
 
+    __events__ = ('on_start', 'on_pause', 'on_stop')
+
     def __init__(self):
-        self.register_event_type('on_start')
-        self.register_event_type('on_pause')
-        self.register_event_type('on_stop')
         super(EventLoopBase, self).__init__()
         self.quit = False
         self.input_events = []
@@ -295,9 +295,13 @@ class EventLoopBase(EventDispatcher):
         # read and dispatch input from providers
         self.dispatch_input()
 
+        # flush all the canvas operation
+        Builder.sync()
+
         window = self.window
         if window and window.canvas.needs_redraw:
             Clock.tick_draw()
+            Builder.sync()
             window.dispatch('on_draw')
             window.dispatch('on_flip')
 

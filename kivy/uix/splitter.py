@@ -55,14 +55,24 @@ from kivy.uix.boxlayout import BoxLayout
 
 
 class SplitterStrip(Button):
-    '''class used for graphical representation of \
+    '''Class used for graphical representation of \
     :class:`kivy.uix.splitter.SplitterStripe`
     '''
     pass
 
 
 class Splitter(BoxLayout):
-    '''see module documentation.
+    '''See module documentation.
+
+    :Events:
+        `on_press`:
+            Fired when the splitter is pressed
+        `on_release`:
+            Fired when the splitter is released
+
+    .. versionchanged:: 1.6.0
+        Added `on_press` and `on_release` events
+
     '''
 
     border = ListProperty([4, 4, 4, 4])
@@ -114,11 +124,11 @@ class Splitter(BoxLayout):
     defaults to `500pt`
     '''
 
+    __events__ = ('on_press', 'on_release')
+
     def __init__(self, **kwargs):
         self._container = None
         self._strip = None
-        self.register_event_type('on_press')
-        self.register_event_type('on_release')
         super(Splitter, self).__init__(**kwargs)
 
     def on_sizable_from(self, instance, sizable_from):
@@ -188,10 +198,6 @@ class Splitter(BoxLayout):
         self.dispatch('on_press')
 
     def on_press(self):
-        '''This event is fired when the strip of the splitter is pressed
-
-        .. versionadded:: 1.0.6
-        '''
         pass
 
     def strip_move(self, instance, touch):
@@ -240,10 +246,6 @@ class Splitter(BoxLayout):
         self.dispatch('on_release')
 
     def on_release(self):
-        '''This event is fired when the strip of the splitter is released
-
-        .. versionadded:: 1.0.6
-        '''
         pass
 
 

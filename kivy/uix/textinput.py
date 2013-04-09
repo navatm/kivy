@@ -120,9 +120,12 @@ from kivy.uix.widget import Widget
 from kivy.uix.bubble import Bubble
 from kivy.graphics import Color, Rectangle
 from kivy.config import Config
+from kivy.utils import platform
+from kivy.metrics import inch
+from kivy.animation import Animation
 from kivy.properties import StringProperty, NumericProperty, \
         ReferenceListProperty, BooleanProperty, AliasProperty, \
-        ListProperty, ObjectProperty
+        ListProperty, ObjectProperty, VariableListProperty
 
 Cache_register = Cache.register
 Cache_append = Cache.append
@@ -168,6 +171,7 @@ class TextInputCutCopyPaste(Bubble):
     but_cut = ObjectProperty(None)
     but_copy = ObjectProperty(None)
     but_paste = ObjectProperty(None)
+    but_selectall = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         self.mode = 'normal'
@@ -190,19 +194,25 @@ class TextInputCutCopyPaste(Bubble):
     def on_parent(self, instance, value):
         parent = self.textinput
         children = self.content.children
+        mode = self.mode
+
         if parent:
             self.clear_widgets()
-            if parent.readonly:
-                # show only copy for readonly textinput
-                self.add_widget(self.but_copy)
-            elif self.mode == 'paste':
+            if mode == 'paste':
                 # show only paste on long touch
-                self.add_widget(self.but_paste)
+                self.but_selectall.opacity = 1
+                widget_list = [self.but_selectall, ]
+                if not parent.readonly:
+                    widget_list.append(self.but_paste)
+            elif parent.readonly:
+                # show only copy for read only text input
+                widget_list = (self.but_copy, )
             else:
                 # normal mode
-                self.add_widget(self.but_cut)
-                self.add_widget(self.but_copy)
-                self.add_widget(self.but_paste)
+                widget_list = (self.but_cut, self.but_copy, self.but_paste)
+
+            for widget in widget_list:
+                self.add_widget(widget)
 
     def do(self, action):
         textinput = self.textinput
@@ -213,6 +223,14 @@ class TextInputCutCopyPaste(Bubble):
             textinput._copy(textinput.selection_text)
         elif action == 'paste':
             textinput._paste()
+        elif action == 'selectall':
+            textinput.select_all()
+            self.mode = ''
+            anim = Animation(opacity=0, d=.333)
+            anim.bind(
+                        on_complete=lambda *args:
+                                        self.on_parent(self, self.parent))
+            anim.start(self.but_selectall)
 
 
 class TextInput(Widget):
@@ -270,8 +288,7 @@ class TextInput(Widget):
         self.bind(font_size=self._trigger_refresh_line_options,
                   font_name=self._trigger_refresh_line_options)
 
-        self.bind(padding_x=self._update_text_options,
-                  padding_y=self._update_text_options,
+        self.bind(padding=self._update_text_options,
                   tab_width=self._update_text_options,
                   font_size=self._update_text_options,
                   font_name=self._update_text_options,
@@ -386,7 +403,10 @@ class TextInput(Widget):
 
             start, finish, lines,\
                 lineflags, len_lines = self._get_line_from_cursor(cr, new_text)
-            self._trigger_refresh_text('insert', start, finish, lines,
+            # calling trigger here could lead to wrong cursor positioning
+            # and repeating of text when keys are added rapidly in a automated
+            # fashion. From Android Keyboard for example.
+            self._refresh_text_from_property('insert', start, finish, lines,
                 lineflags, len_lines)
 
         self.cursor = self.get_cursor_from_index(ci + len_str)
@@ -394,6 +414,7 @@ class TextInput(Widget):
         self._set_unredo_insert(ci, ci + len_str, substring, from_undo)
 
     def _get_line_from_cursor(self, start, new_text):
+        # get current paragraph from cursor position
         finish = start
         lines = self._lines
         linesflags = self._lines_flags
@@ -407,7 +428,7 @@ class TextInput(Widget):
         except IndexError:
             pass
         lines, lineflags = self._split_smart(new_text)
-        len_lines = max(1, len(lines) - 1)
+        len_lines = max(1, len(lines))
         return start, finish, lines, lineflags, len_lines
 
     def _set_unredo_insert(self, ci, sci, substring, from_undo):
@@ -446,7 +467,7 @@ class TextInput(Widget):
                 self.insert_text(substring, True)
             elif undo_type == 'bkspc':
                 self.cursor = _get_cusror_from_index(x_item['redo_command'])
-                self.do_backspace(True)
+                self.do_backspace(from_undo=True)
             else:
                 # delsel
                 ci, sci = x_item['redo_command']
@@ -504,35 +525,42 @@ class TextInput(Widget):
         if self.readonly:
             return
         cc, cr = self.cursor
-        text = self._lines[cr]
+        _lines = self._lines
+        text = _lines[cr]
         cursor_index = self.cursor_index()
+        prev_line_len = len(_lines[cr - 1])
+        text_last_line = _lines[cr - 1]
+
         if cc == 0 and cr == 0:
             return
         _lines_flags = self._lines_flags
+        start = cr
         if cc == 0:
-            text_last_line = self._lines[cr - 1]
             substring = '\n' if _lines_flags[cr] else ' '
-            self._set_line_text(cr - 1, text_last_line + text)
+            new_text = text_last_line + text
+            self._set_line_text(cr - 1, new_text)
             self._delete_line(cr)
-            new_text = ''
+            start = cr - 1
         else:
             #ch = text[cc-1]
             substring = text[cc - 1]
             new_text = text[:cc - 1] + text[cc:]
             self._set_line_text(cr, new_text)
 
-            if not self._lines_flags[cr]:
-                # refresh just the current line instead of the whole text
-                start, finish, lines, lineflags, len_lines =\
-                    self._get_line_from_cursor(cr, new_text)
-                self._trigger_refresh_text('del', start, finish, lines,
-                                            lineflags, len_lines)
+        # refresh just the current line instead of the whole text
+        start, finish, lines, lineflags, len_lines =\
+                                    self._get_line_from_cursor(start, new_text)
+        # avoid trigger refresh, leads to issue with
+        # keys/text send rapidly through code.
+        self._refresh_text_from_property('del', start, finish, lines,
+                                    lineflags, len_lines)
 
         self.cursor = self.get_cursor_from_index(cursor_index - 1)
         # handle undo and redo
-        self._set_undo_redo_bkspc(cursor_index,
-                                        cursor_index - 1,
-                                        substring, from_undo)
+        self._set_undo_redo_bkspc(
+                                cursor_index,
+                                cursor_index - 1,
+                                substring, from_undo)
 
     def _set_undo_redo_bkspc(self, ol_index, new_index, substring, from_undo):
         # handle undo and redo for backspace
@@ -571,9 +599,19 @@ class TextInput(Widget):
             row = min(row + 1, len(self._lines) - 1)
             col = min(len(self._lines[row]), col)
         elif action == 'cursor_left':
-            col, row = self.get_cursor_from_index(self.cursor_index() - 1)
+            if col == 0:
+                if row:
+                    row -= 1
+                    col = len(self._lines[row])
+            else:
+                col, row = col - 1, row
         elif action == 'cursor_right':
-            col, row = self.get_cursor_from_index(self.cursor_index() + 1)
+            if col == len(self._lines[row]):
+                if row < len(self._lines) - 1:
+                    col = 0
+                    row += 1
+            else:
+                col, row = col + 1, row
         elif action == 'cursor_home':
             col = 0
         elif action == 'cursor_end':
@@ -590,12 +628,13 @@ class TextInput(Widget):
     def get_cursor_from_xy(self, x, y):
         '''Return the (row, col) of the cursor from an (x, y) position.
         '''
+        padding_top = self.padding[1]
         l = self._lines
         dy = self.line_height + self._line_spacing
         cx = x - self.x
         scrl_y = self.scroll_y
         scrl_y = scrl_y / dy if scrl_y > 0 else 0
-        cy = (self.top - self.padding_y + scrl_y * dy) - y
+        cy = (self.top - padding_top + scrl_y * dy) - y
         cy = int(boundary(round(cy / dy), 0, len(l) - 1))
         dcx = 0
         _get_text_width = self._get_text_width
@@ -614,6 +653,7 @@ class TextInput(Widget):
     def cancel_selection(self):
         '''Cancel current selection (if any).
         '''
+        self._selection_from = self._selection_to = self.cursor_index()
         self._selection = False
         self._selection_finished = True
         self._selection_touch = None
@@ -687,7 +727,7 @@ class TextInput(Widget):
     # Touch control
     #
     def long_touch(self, dt):
-        if self._selection_to == self._selection_from and not self.readonly:
+        if self._selection_to == self._selection_from:
             self._show_cut_copy_paste(
                                         self._long_touch_pos,
                                         self._win,
@@ -709,7 +749,7 @@ class TextInput(Widget):
         self._hide_cut_copy_paste(self._win)
         # schedule long touch for paste
         self._long_touch_pos = touch.pos
-        Clock.schedule_once(self.long_touch, 1)
+        Clock.schedule_once(self.long_touch, .5)
 
         self.cursor = self.get_cursor_from_xy(*touch_pos)
         if not self._selection_touch:
@@ -764,7 +804,9 @@ class TextInput(Widget):
             return
         bubble = self._bubble
         if bubble is not None:
-            win.remove_widget(bubble)
+            anim = Animation(opacity=0, d=.225)
+            anim.bind(on_complete=lambda *args: win.remove_widget(bubble))
+            anim.start(bubble)
 
     def _show_cut_copy_paste(self, pos, win, parent_changed=False, mode='', *l):
         # Show a bubble with cut copy and paste buttons
@@ -785,7 +827,7 @@ class TextInput(Widget):
         t_pos = self.to_window(x, y)
         bubble_size = bubble.size
         win_size = win.size
-        bubble.pos = (t_pos[0] - bubble_size[0] / 2., t_pos[1])
+        bubble.pos = (t_pos[0] - bubble_size[0] / 2., t_pos[1] + inch(.25))
         bubble_pos = bubble.pos
         lh, ls = self.line_height, self._line_spacing
 
@@ -819,7 +861,10 @@ class TextInput(Widget):
                 bubble.arrow_pos = 'bottom_mid'
 
         bubble.mode = mode
+        Animation.cancel_all(bubble)
+        bubble.opacity = 0
         win.add_widget(bubble)
+        Animation(opacity=1, d=.225).start(bubble)
 
     #
     # Private
@@ -845,7 +890,12 @@ class TextInput(Widget):
             else:
                 Clock.schedule_once(partial(self.on_focus, self, value), 0)
             return
-        if value and not self.readonly:
+
+        editable = ((not self.readonly) or
+                    (platform() in ('win', 'linux', 'macosx') and
+                    self._keyboard_mode == 'system'))
+
+        if value and editable:
             keyboard = win.request_keyboard(self._keyboard_released, self)
             self._keyboard = keyboard
             keyboard.bind(
@@ -925,19 +975,19 @@ class TextInput(Widget):
 
     def _get_text_width(self, text, tab_width, _label_cached):
         # Return the width of a text, according to the current line options
-        width = Cache_get('textinput.width', text)
+        kw = self._get_line_options()
+        cid = u'{}\0{}'.format(text, kw)
+        width = Cache_get('textinput.width', cid)
         if width:
             return width
         if not _label_cached:
-            self._get_line_options()
             _label_cached = self._label_cached
-        orig_text = text
         text = text.replace('\t', ' ' * tab_width)
         if not self.password:
             width = _label_cached.get_extents(text)[0]
         else:
             width = _label_cached.get_extents('*' * len(text))[0]
-        Cache_append('textinput.width', orig_text, width)
+        Cache_append('textinput.width', cid, width)
         return width
 
     def _do_blink_cursor(self, dt):
@@ -1032,7 +1082,6 @@ class TextInput(Widget):
                                 _line_rects)
 
         line_label = _lines_labels[0]
-        pady = self.padding_y
         min_line_ht = self._label_cached.get_extents('_')[1]
         if line_label is None:
             self.line_height = max(1, min_line_ht)
@@ -1122,11 +1171,14 @@ class TextInput(Widget):
             rects = self._lines_rects
             labels = self._lines_labels
             lines = self._lines
-        pady = self.padding_y
-        x = self.x + self.padding_x
-        y = self.top - pady + sy
-        miny = self.y + pady
-        maxy = self.top - pady
+        padding_left = self.padding[0]
+        padding_top = self.padding[1]
+        padding_right = self.padding[2]
+        padding_bottom = self.padding[3]
+        x = self.x + padding_left
+        y = self.top - padding_top + sy
+        miny = self.y + padding_bottom
+        maxy = self.top - padding_top
         for line_num, value in enumerate(lines):
             if miny <= y <= maxy + dy:
                 texture = labels[line_num]
@@ -1138,8 +1190,8 @@ class TextInput(Widget):
 
                 # calcul coordinate
                 viewport_pos = sx, 0
-                vw = self.width - self.padding_x * 2
-                vh = self.height - pady * 2
+                vw = self.width - padding_left - padding_right
+                vh = self.height - padding_top - padding_bottom
                 tw, th = map(float, size)
                 oh, ow = tch, tcw = texc[1:3]
                 tcx, tcy = 0, 0
@@ -1198,11 +1250,12 @@ class TextInput(Widget):
         self.canvas.remove_group('selection')
         dy = self.line_height + self._line_spacing
         rects = self._lines_rects
-        _padding_y = self.padding_y
+        padding_top = self.padding[1]
+        padding_bottom = self.padding[3]
         _top = self.top
-        y = _top - _padding_y + self.scroll_y
-        miny = self.y + _padding_y
-        maxy = _top - _padding_y
+        y = _top - padding_top + self.scroll_y
+        miny = self.y + padding_bottom
+        maxy = _top - padding_top
         draw_selection = self._draw_selection
         a, b = self._selection_from, self._selection_to
         if a > b:
@@ -1219,7 +1272,8 @@ class TextInput(Widget):
         tab_width = self.tab_width
         _label_cached = self._label_cached
         width = self.width
-        padding_x = self.padding_x
+        padding_left = self.padding[0]
+        padding_right = self.padding[2]
         x = self.x
         canvas_add = self.canvas.add
         selection_color = self.selection_color
@@ -1228,14 +1282,14 @@ class TextInput(Widget):
                 r = rects[line_num]
                 draw_selection(r.pos, r.size, line_num, (s1c, s1r),
                     (s2c, s2r - 1), _lines, _get_text_width, tab_width,
-                    _label_cached, width, padding_x, x, canvas_add,
-                    selection_color)
+                    _label_cached, width, padding_left, padding_right, x,
+                    canvas_add, selection_color)
             y -= dy
 
     def _draw_selection(self, *largs):
         pos, size, line_num, (s1c, s1r), (s2c, s2r),\
          _lines, _get_text_width, tab_width, _label_cached, width,\
-         padding_x, x, canvas_add, selection_color = largs
+         padding_left, padding_right, x, canvas_add, selection_color = largs
         # Draw the current selection on the widget.
         if line_num < s1r or line_num > s2r:
             return
@@ -1249,11 +1303,11 @@ class TextInput(Widget):
         if line_num == s2r:
             lines = _lines[line_num]
             x2 = x + _get_text_width(lines[:s2c], tab_width, _label_cached)
-        width_minus_padding_x = width - padding_x
-        maxx = x + width_minus_padding_x
+        width_minus_padding_right = width - padding_right
+        maxx = x + width_minus_padding_right
         if x1 > maxx:
             return
-        x2 = min(x2, x + width_minus_padding_x)
+        x2 = min(x2, x + width_minus_padding_right)
         canvas_add(Color(*selection_color, group='selection'))
         canvas_add(Rectangle(
             pos=(x1, pos[1]), size=(x2 - x1, size[1]), group='selection'))
@@ -1268,8 +1322,10 @@ class TextInput(Widget):
     def _get_cursor_pos(self):
         # return the current cursor x/y from the row/col
         dy = self.line_height + self._line_spacing
-        x = self.x + self.padding_x
-        y = self.top - self.padding_y + self.scroll_y
+        padding_left = self.padding[0]
+        padding_top = self.padding[1]
+        x = self.x + padding_left
+        y = self.top - padding_top + self.scroll_y
         y -= self.cursor_row * dy
         x, y = x + self.cursor_offset() - self.scroll_x, y
         return x, y
@@ -1363,7 +1419,9 @@ class TextInput(Widget):
         lines_flags = []
         _join = ''.join
         lines_append, lines_flags_append = lines.append, lines_flags.append
-        width = self.width - self.padding_x * 2
+        padding_left = self.padding[0]
+        padding_right = self.padding[2]
+        width = self.width - padding_left - padding_right
         text_width = self._get_text_width
         _tab_width, _label_cached = self.tab_width, self._label_cached
 
@@ -1402,6 +1460,7 @@ class TextInput(Widget):
                 self._selection = True
             self._selection_finished = False
         elif internal_action.startswith('cursor_'):
+            cc, cr = self.cursor
             self.do_cursor_movement(internal_action)
             if self._selection and not self._selection_finished:
                 self._selection_to = self.cursor_index()
@@ -1438,6 +1497,7 @@ class TextInput(Widget):
                 self._update_selection(True)
 
     def _keyboard_on_key_down(self, window, keycode, text, modifiers):
+        self._hide_cut_copy_paste()
         is_osx = sys.platform == 'darwin'
         # Keycodes on OSX:
         ctrl, cmd = 64, 1024
@@ -1567,7 +1627,9 @@ class TextInput(Widget):
 
         # adjust scrollview to ensure that the cursor will be always inside our
         # viewport.
-        viewport_width = self.width - self.padding_x * 2
+        padding_left = self.padding[0]
+        padding_right = self.padding[2]
+        viewport_width = self.width - padding_left - padding_right
         sx = self.scroll_x
         offset = self.cursor_offset()
 
@@ -1582,7 +1644,9 @@ class TextInput(Widget):
         dy = self.line_height + self._line_spacing
         offsety = cr * dy
         sy = self.scroll_y
-        viewport_height = self.height - self.padding_y * 2 - dy
+        padding_top = self.padding[1]
+        padding_bottom = self.padding[3]
+        viewport_height = self.height - padding_top - padding_bottom - dy
         if offsety > viewport_height + sy:
             sy = offsety - viewport_height
         if offsety < sy:
@@ -1645,25 +1709,51 @@ class TextInput(Widget):
     4.
     '''
 
-    padding_x = NumericProperty(0)
-    '''Horizontal padding of the text, inside the widget box.
+    padding_x = VariableListProperty([0, 0], length=2)
+    '''Horizontal padding of the text: [padding_left, padding_right].
 
-    :data:`padding_x` is a :class:`~kivy.properties.NumericProperty`, default to
-    0. This might be changed by the current theme.
+    padding_x also accepts a one argument form [padding_horizontal].
+
+    :data:`padding_x` is a :class:`~kivy.properties.VariableListProperty`, default
+    to [0, 0]. This might be changed by the current theme.
+
+    .. deprecated:: 1.7.0
+        Use :data:`padding` instead
     '''
 
-    padding_y = NumericProperty(0)
-    '''Vertical padding of the text, inside the widget box.
+    def on_padding_x(self, instance, value):
+        self.padding[0] = value[0]
+        self.padding[2] = value[1]
 
-    :data:`padding_x` is a :class:`~kivy.properties.NumericProperty`, default to
-    0. This might be changed by the current theme.
+    padding_y = VariableListProperty([0, 0], length=2)
+    '''Vertical padding of the text: [padding_top, padding_bottom].
+
+    padding_y also accepts a one argument form [padding_vertical].
+
+    :data:`padding_y` is a :class:`~kivy.properties.VariableListProperty`, default
+    to [0, 0]. This might be changed by the current theme.
+
+    .. deprecated:: 1.7.0
+        Use :data:`padding` instead
     '''
 
-    padding = ReferenceListProperty(padding_x, padding_y)
-    '''Padding of the text, in the format (padding_x, padding_y).
+    def on_padding_y(self, instance, value):
+        self.padding[1] = value[0]
+        self.padding[3] = value[1]
 
-    :data:`padding` is a :class:`~kivy.properties.ReferenceListProperty` of
-    (:data:`padding_x`, :data:`padding_y`) properties.
+    padding = VariableListProperty([0, 0, 0, 0])
+    '''Padding of the text: [padding_left, padding_top, padding_right,
+    padding_bottom].
+
+    padding also accepts a two argument form [padding_horizontal,
+    padding_vertical] and a one argument form [padding].
+
+    .. versionchanged:: 1.7.0
+
+    Replaced AliasProperty with VariableListProperty.
+
+    :data:`padding` is a :class:`~kivy.properties.VariableListProperty`, default
+    to [0, 0, 0, 0]. This might be changed by the current theme.
     '''
 
     scroll_x = NumericProperty(0)

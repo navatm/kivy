@@ -82,7 +82,7 @@ from kivy.event import EventDispatcher
 from kivy.factory import Factory
 from kivy.properties import NumericProperty, StringProperty, \
         AliasProperty, ReferenceListProperty, ObjectProperty, \
-        ListProperty
+        ListProperty, DictProperty
 from kivy.graphics import Canvas
 from kivy.base import EventLoop
 from kivy.lang import Builder
@@ -127,15 +127,11 @@ class Widget(EventDispatcher):
     '''
 
     __metaclass__ = WidgetMetaclass
+    __events__ = ('on_touch_down', 'on_touch_move', 'on_touch_up')
 
     def __init__(self, **kwargs):
         # Before doing anything, ensure the windows exist.
         EventLoop.ensure_window()
-
-        # Register touch events
-        self.register_event_type('on_touch_down')
-        self.register_event_type('on_touch_move')
-        self.register_event_type('on_touch_up')
 
         super(Widget, self).__init__(**kwargs)
 
@@ -280,7 +276,7 @@ class Widget(EventDispatcher):
             children = self.children
             if index >= len(children):
                 index = len(children)
-                next_index = -1
+                next_index = 0
             else:
                 next_child = children[index]
                 next_index = canvas.indexof(next_child.canvas)
@@ -290,6 +286,9 @@ class Widget(EventDispatcher):
                     next_index += 1
 
             children.insert(index, widget)
+            # we never want to insert widget _before_ canvas.before.
+            if next_index == 0 and canvas.has_before:
+                next_index = 1
             canvas.insert(next_index, widget.canvas)
 
     def remove_widget(self, widget):
@@ -562,6 +561,16 @@ class Widget(EventDispatcher):
 
     :data:`pos_hint` is a :class:`~kivy.properties.ObjectProperty` containing a
     dict.
+    '''
+
+    ids = DictProperty({})
+    '''This is a Dictionary of id's defined in your kv language. This will only
+    be populated if you use id's in your kv language code.
+
+    .. versionadded:: 1.6.0
+
+    :data:`ids` is a :class:`~kivy.properties.DictProperty`, defaults to a empty
+    dict {}.
     '''
 
     opacity = NumericProperty(1.0)

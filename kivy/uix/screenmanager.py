@@ -50,7 +50,7 @@ Here is an example with a 'Menu Screen', and a 'Setting Screen'::
     from kivy.app import App
     from kivy.lang import Builder
     from kivy.uix.screenmanager import ScreenManager, Screen
-    
+
     # Create both screen. Please note the root.manager.current: this is how you
     # can control the ScreenManager from kv. Each screen have by default a
     # property manager that give you the instance of the ScreenManager used.
@@ -62,7 +62,7 @@ Here is an example with a 'Menu Screen', and a 'Setting Screen'::
                 on_press: root.manager.current = 'settings'
             Button:
                 text: 'Quit'
-    
+
     <SettingsScreen>:
         BoxLayout:
             Button:
@@ -71,24 +71,24 @@ Here is an example with a 'Menu Screen', and a 'Setting Screen'::
                 text: 'Back to menu'
                 on_press: root.manager.current = 'menu'
     """)
-    
+
     # Declare both screen
     class MenuScreen(Screen):
         pass
-    
+
     class SettingsScreen(Screen):
         pass
-    
+
     # Create the screen manager
     sm = ScreenManager()
     sm.add_widget(MenuScreen(name='menu'))
     sm.add_widget(SettingsScreen(name='settings'))
-    
+
     class TestApp(App):
-    
+
         def build(self):
-            return sm 
-    
+            return sm
+
     if __name__ == '__main__':
         TestApp().run()
 
@@ -206,12 +206,7 @@ class Screen(RelativeLayout):
     default to 'out'.
     '''
 
-    def __init__(self, **kwargs):
-        self.register_event_type('on_pre_enter')
-        self.register_event_type('on_enter')
-        self.register_event_type('on_pre_leave')
-        self.register_event_type('on_leave')
-        super(Screen, self).__init__(**kwargs)
+    __events__ = ('on_pre_enter', 'on_enter', 'on_pre_leave', 'on_leave')
 
     def on_pre_enter(self, *args):
         pass
@@ -282,10 +277,7 @@ class TransitionBase(EventDispatcher):
 
     _anim = ObjectProperty(allownone=True)
 
-    def __init__(self, **kw):
-        self.register_event_type('on_progress')
-        self.register_event_type('on_complete')
-        super(TransitionBase, self).__init__(**kw)
+    __events__ = ('on_progress', 'on_complete')
 
     def start(self, manager):
         '''(internal) Start the transition. This is automatically called by the
