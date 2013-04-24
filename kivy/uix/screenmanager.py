@@ -629,9 +629,9 @@ class ScreenManager(FloatLayout):
             self.current = name
 
     def add_widget(self, screen):
-        if not isinstance(screen, Screen):
-            raise ScreenManagerException(
-                    'ScreenManager accept only Screen widget.')
+#        if not isinstance(screen, Screen):
+#            raise ScreenManagerException(
+#                    'ScreenManager accept only Screen widget.')
         if screen.manager:
             raise ScreenManagerException(
                     'Screen already managed by another ScreenManager.')
@@ -643,10 +643,10 @@ class ScreenManager(FloatLayout):
 
     def remove_widget(self, *l):
         screen = l[0]
-        if not isinstance(screen, Screen):
-            raise ScreenManagerException(
-                    'ScreenManager uses remove_widget only to remove' +
-                    'screens added via add_widget! use real_remove_widget.')
+#        if not isinstance(screen, Screen):
+#            raise ScreenManagerException(
+#                    'ScreenManager uses remove_widget only to remove' +
+#                    'screens added via add_widget! use real_remove_widget.')
 
         if not screen in self.screens:
             return
