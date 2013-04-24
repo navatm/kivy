@@ -117,7 +117,7 @@ class Label(Widget):
 
     _font_properties = ('text', 'font_size', 'font_name', 'bold', 'italic',
         'halign', 'valign', 'padding_x', 'padding_y', 'text_size', 'shorten',
-        'mipmap', 'markup', 'line_height')
+        'shorten_by_padding', 'mipmap', 'markup', 'line_height')
 
     def __init__(self, **kwargs):
         self._trigger_texture = Clock.create_trigger(self.texture_update, -1)
@@ -435,6 +435,15 @@ class Label(Widget):
 
     :data:`shorten` is a :class:`~kivy.properties.BooleanProperty`, default to
     False.
+    '''
+
+    shorten_by_padding = BooleanProperty(False)
+    '''
+    Same a shorten except it uses padding to shorten the text. It does not
+    add periods to the end of the string after it has been shortened.
+
+    :data:`shorten_by_padding` is a :class:`~kivy.properties.BooleanProperty`,
+    default to False.
     '''
 
     markup = BooleanProperty(False)
