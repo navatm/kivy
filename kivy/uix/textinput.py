@@ -142,6 +142,10 @@ Clipboard = None
 # for reloading, we need to keep a list of textinput to retrigger the rendering
 _textinput_list = []
 
+# When we are generating documentation, Config doesn't exist
+_is_desktop = False
+if Config:
+    _is_desktop = Config.getboolean('kivy', 'desktop')
 
 # register an observer to clear the textinput cache when OpenGL will reload
 if 'KIVY_DOC' not in environ:
@@ -1244,10 +1248,7 @@ class TextInput(Widget):
             rects = self._lines_rects
             labels = self._lines_labels
             lines = self._lines
-        padding_left = self.padding[0]
-        padding_top = self.padding[1]
-        padding_right = self.padding[2]
-        padding_bottom = self.padding[3]
+        padding_left, padding_top, padding_right, padding_bottom = self.padding
         x = self.x + padding_left
         y = self.top - padding_top + sy
         miny = self.y + padding_bottom
@@ -1814,7 +1815,7 @@ class TextInput(Widget):
         self.padding[1] = value[0]
         self.padding[3] = value[1]
 
-    padding = VariableListProperty([0, 0, 0, 0])
+    padding = VariableListProperty([6, 6, 6, 6])
     '''Padding of the text: [padding_left, padding_top, padding_right,
     padding_bottom].
 
@@ -1826,7 +1827,7 @@ class TextInput(Widget):
     Replaced AliasProperty with VariableListProperty.
 
     :data:`padding` is a :class:`~kivy.properties.VariableListProperty`, default
-    to [0, 0, 0, 0]. This might be changed by the current theme.
+    to [6, 6, 6, 6].
     '''
 
     scroll_x = NumericProperty(0)
@@ -1910,7 +1911,7 @@ class TextInput(Widget):
     default to [0, 0, 0, 1] #Black
     '''
 
-    use_bubble = BooleanProperty(not bool(Config.get('kivy', 'desktop')))
+    use_bubble = BooleanProperty(not _is_desktop)
     '''Indicates whether the cut copy paste bubble is used
 
     .. versionadded:: 1.6.1
