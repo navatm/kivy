@@ -132,6 +132,7 @@ from kivy.properties import StringProperty, ObjectProperty, AliasProperty, \
         NumericProperty, ListProperty, OptionProperty, BooleanProperty
 from kivy.animation import Animation, AnimationTransition
 from kivy.uix.relativelayout import RelativeLayout
+from kivy.uix.relativelayoutlegacy import RelativeLayoutLegacy
 from kivy.lang import Builder
 from kivy.graphics.transformation import Matrix
 from kivy.graphics import RenderContext, Rectangle, Fbo, \
@@ -144,7 +145,7 @@ class ScreenManagerException(Exception):
     pass
 
 
-class Screen(RelativeLayout):
+class ScreenBase(object):
     '''Screen is an element intented to be used within :class:`ScreenManager`.
     Check module documentation for more information.
 
@@ -222,6 +223,26 @@ class Screen(RelativeLayout):
 
     def __repr__(self):
         return '<Screen name=%r>' % self.name
+
+
+class Screen(RelativeLayout, ScreenBase):
+    ''' Default Screen '''
+    pass
+
+
+class ScreenLegacy(RelativeLayoutLegacy, ScreenBase):
+    ''' Legacy Screen
+
+    This uses the old Relative layout that inherits Scatter
+    instead of the updated one that inherits FloatLayout
+    (version 1.6.1).
+    '''
+
+    def __init__(self, **kwargs):
+        # Prevents widgets from getting added and removed when
+        # clicking on a widget inside of the screen.
+        kwargs['auto_bring_to_front'] = False
+        super(ScreenLegacy, self).__init__(**kwargs)
 
 
 class TransitionBase(EventDispatcher):
@@ -629,9 +650,9 @@ class ScreenManager(FloatLayout):
             self.current = name
 
     def add_widget(self, screen):
-#        if not isinstance(screen, Screen):
-#            raise ScreenManagerException(
-#                    'ScreenManager accept only Screen widget.')
+        if not isinstance(screen, ScreenBase):
+            raise ScreenManagerException(
+                    'ScreenManager accept only Screen widget.')
         if screen.manager:
             raise ScreenManagerException(
                     'Screen already managed by another ScreenManager.')
@@ -643,10 +664,10 @@ class ScreenManager(FloatLayout):
 
     def remove_widget(self, *l):
         screen = l[0]
-#        if not isinstance(screen, Screen):
-#            raise ScreenManagerException(
-#                    'ScreenManager uses remove_widget only to remove' +
-#                    'screens added via add_widget! use real_remove_widget.')
+        if not isinstance(screen, ScreenBase):
+            raise ScreenManagerException(
+                    'ScreenManager uses remove_widget only to remove' +
+                    'screens added via add_widget! use real_remove_widget.')
 
         if not screen in self.screens:
             return
