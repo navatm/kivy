@@ -122,7 +122,7 @@ You can easily switch to a new transition by changing the
 
 '''
 
-__all__ = ('Screen', 'ScreenManager', 'ScreenManagerException',
+__all__ = ('Screen', 'ScreenLegacy', 'ScreenManager', 'ScreenManagerException',
     'TransitionBase', 'ShaderTransition', 'SlideTransition', 'SwapTransition',
     'FadeTransition', 'WipeTransition')
 
