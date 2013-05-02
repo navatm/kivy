@@ -17,16 +17,16 @@ position of the RelativeLayout.  The child widgets coordiantes remain
 
 ..note::
 
-    The :class:`RelativeLayout` is implemented as a :class`FloatLayout`
-    inside a :class:`Scatter`.
+	The :class:`RelativeLayout` is implemented as a :class`FloatLayout`
+	inside a :class:`Scatter`.
 
 .. warning::
 
-    Since the actual RelativeLayout is a Scatter, its add_widget and
-    remove_widget functions are overwritten to add children to the embedded
-    FloatLayout (accessible as `content` property of RelativeLayout)
-    automatically. So if you want to access the added child elements,
-    you need self.content.children, instead of self.children.
+	Since the actual RelativeLayout is a Scatter, its add_widget and
+	remove_widget functions are overwritten to add children to the embedded
+	FloatLayout (accessible as `content` property of RelativeLayout)
+	automatically. So if you want to access the added child elements,
+	you need self.content.children, instead of self.children.
 '''
 
 from kivy.uix.scatter import Scatter
@@ -35,29 +35,33 @@ from kivy.properties import ObjectProperty
 
 
 class RelativeLayoutLegacy(Scatter):
-    '''RelativeLayout class, see module documentation for more information.
-    '''
+	'''RelativeLayout class, see module documentation for more information.
+	'''
 
-    content = ObjectProperty()
+	content = ObjectProperty()
 
-    def __init__(self, **kw):
-        self.content = FloatLayout()
-        super(RelativeLayoutLegacy, self).__init__(**kw)
-        if self.content.size != self.size:
-            self.content.size = self.size
-        super(RelativeLayoutLegacy, self).add_widget(self.content)
-        self.bind(size=self.update_size)
+	def __init__(self, **kw):
+		self.content = FloatLayout()
+		super(RelativeLayoutLegacy, self).__init__(**kw)
+		
+		self.do_rotation = False
+		self.do_translation = False
+		self.do_scale = False
+		
+		if self.content.size != self.size:
+			self.content.size = self.size
+		super(RelativeLayoutLegacy, self).add_widget(self.content)
+		self.bind(size=self.update_size)
 
-    def update_size(self, instance, size):
-        self.content.size = size
+	def update_size(self, instance, size):
+		self.content.size = size
 
-    def add_widget(self, *l):
-        self.content.add_widget(*l)
+	def add_widget(self, *l):
+		self.content.add_widget(*l)
 
-    def remove_widget(self, *l):
-        self.content.remove_widget(*l)
+	def remove_widget(self, *l):
+		self.content.remove_widget(*l)
 
-    def clear_widgets(self):
-        self.content.clear_widgets()
-
+	def clear_widgets(self):
+		self.content.clear_widgets()
 
