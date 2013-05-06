@@ -97,7 +97,7 @@ For a better rendering, you could add a color for the reference. Replace the
 
 '''
 
-__all__ = ('Label', )
+__all__ = ('Label',)
 
 from functools import partial
 from kivy.clock import Clock
@@ -121,7 +121,8 @@ class Label(Widget):
 
     _font_properties = ('text', 'font_size', 'font_name', 'bold', 'italic',
         'halign', 'valign', 'padding_x', 'padding_y', 'text_size', 'shorten',
-        'shorten_by_padding', 'mipmap', 'markup', 'line_height')
+        'shorten_at_end', 'shorten_by_padding', 'mipmap', 'markup',
+        'line_height')
 
     def __init__(self, **kwargs):
         self._trigger_texture = Clock.create_trigger(self.texture_update, -1)
@@ -442,6 +443,16 @@ class Label(Widget):
 
     :data:`shorten` is a :class:`~kivy.properties.BooleanProperty`, default to
     False.
+    '''
+
+    shorten_at_end = BooleanProperty(False)
+    '''
+    Indicates whether the label should attempt to shorten its textual contents
+    as much as possible if a `text_size` is given. Setting this to True without
+    an appropriately set `text_size` will lead to unexpected results.
+
+    :data:`shorten_at_end` is a :class:`~kivy.properties.BooleanProperty`,
+    default to False.
     '''
 
     shorten_by_padding = BooleanProperty(False)

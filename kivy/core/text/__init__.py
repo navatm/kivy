@@ -72,6 +72,11 @@ class LabelBase(object):
             contents as much as possible if a `size` is given.
             Setting this to True without an appropriately set size will lead
             unexpected results.
+        `shorten_at_end`: bool, defaults to False
+            Indicate whether the label should attempt to shorten its textual
+            contents as much as possible if a `size` is given.
+            Setting this to True without an appropriately set size will lead
+            unexpected results. Always shortens at the end of the string.
         `shorten_by_padding`: bool, defaults to False
             Same a shorten except it uses padding to shorten the text. It 
             does not add periods to the end of the string after it has 
@@ -90,13 +95,15 @@ class LabelBase(object):
 
     def __init__(self, text='', font_size=12, font_name=DEFAULT_FONT,
                  bold=False, italic=False, halign='left', valign='bottom',
-                 shorten=False, shorten_by_padding=False, text_size=None, 
-                 mipmap=False, color=None, line_height=1.0, **kwargs):
+                 shorten=False, shorten_at_end=False, shorten_by_padding=False,
+                 text_size=None, mipmap=False, color=None, line_height=1.0,
+                 **kwargs):
 
         options = {'text': text, 'font_size': font_size,
             'font_name': font_name, 'bold': bold, 'italic': italic,
             'halign': halign, 'valign': valign, 'shorten': shorten,
             'shorten_by_padding': shorten_by_padding,
+            'shorten_at_end': shorten_at_end,
             'mipmap': mipmap, 'line_height': line_height}
 
         options['color'] = color or (1, 1, 1, 1)
@@ -224,6 +231,22 @@ class LabelBase(object):
             segment = max_letters - 3  # length of '...'
             return u'{0}...'.format(text[:segment].strip())
 
+    def shorten_at_end(self, text, margin=2):
+        # Just a tiny shortcut
+        textwidth = lambda txt: self.get_extents(txt)[0]
+        if self.text_size[0] is None:
+            width = 0
+        else:
+            width = int(self.text_size[0])
+
+        letters = '...' + text
+        while textwidth(letters) > width:
+            letters = letters[: letters.rfind(' ')]
+
+        max_letters = len(letters) - 2
+        segment = max_letters - 3  # length of '...'
+        return u'{0}...'.format(text[:segment].strip())
+
     def shorten_by_padding(self, text):
         # Just a tiny shortcut
         textwidth = lambda txt: self.get_extents(txt)[0]
@@ -239,7 +262,8 @@ class LabelBase(object):
         letters = text
         while textwidth(letters) > width:       
             letters = letters[:-1]
-
+        
+        return letters.strip()
         segment = len(letters)
 
         if segment < len(text):
@@ -337,10 +361,13 @@ class LabelBase(object):
             # Shorten the text that we actually display
             text = self.text
             last_word_width = get_extents(text[text.rstrip().rfind(' '):])[0]
-            if ((options['shorten'] or options['shorten_by_padding']) 
+            if ((options['shorten'] or options['shorten_at_end']
+                    or options['shorten_by_padding']) 
                 and get_extents(text)[0] > uw - last_word_width):
                 if options['shorten']:
                     text = self.shorten(text)
+                elif options['shorten_at_end']:
+                    text = self.shorten_at_end(text)
                 else:
                     text = self.shorten_by_padding(text)
 
@@ -432,7 +459,7 @@ class LabelBase(object):
                             # glyphs?
                             if _spaces:
                                 space_width = cache[' '][0] if last_space else 0
-                                just_space = (((uw - size[0] + space_width) *
+                                just_space = (((uw - size[0] + space_width) * 
                                                1.) / (_spaces * 1.))
 
                     for glyph in glyphs:
@@ -581,4 +608,3 @@ if 'KIVY_DOC' not in os.environ:
         'data/fonts/DroidSans-Italic.ttf',
         'data/fonts/DroidSans-Bold.ttf',
         'data/fonts/DroidSans-BoldItalic.ttf')
-
