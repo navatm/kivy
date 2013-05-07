@@ -154,21 +154,24 @@ class Slider(Widget):
             return (x, y + padding + nval * (self.height - 2 * padding))
 
     def set_value_pos(self, pos):
-        padding = self.padding
-        x = min(self.right - padding, max(pos[0], self.x + padding))
-        y = min(self.top - padding, max(pos[1], self.y + padding))
-        if self.orientation == 'horizontal':
-            if self.width == 0:
-                self.value_normalized = 0
+        if self.collide_point(*pos):
+            padding = self.padding
+            x = min(self.right - padding, max(pos[0], self.x + padding))
+            y = min(self.top - padding, max(pos[1], self.y + padding))
+            if self.orientation == 'horizontal':
+                if self.width == 0:
+                    self.value_normalized = 0
+                else:
+                    self.value_normalized = (x - self.x - padding
+                                             ) / float(self.width - 2 * padding)
             else:
-                self.value_normalized = (x - self.x - padding
-                                         ) / float(self.width - 2 * padding)
-        else:
-            if self.height == 0:
-                self.value_normalized = 0
-            else:
-                self.value_normalized = (y - self.y - padding
-                                         ) / float(self.height - 2 * padding)
+                if self.height == 0:
+                    self.value_normalized = 0
+                else:
+                    normal_val = (y - self.y - padding
+                                  ) / float(self.height - 2 * padding)
+                    self.value_normalized = normal_val
+
     value_pos = AliasProperty(get_value_pos, set_value_pos,
                               bind=('x', 'y', 'width', 'height', 'min',
                                     'max', 'value_normalized', 'orientation'))
