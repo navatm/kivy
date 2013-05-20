@@ -901,7 +901,7 @@ class ListView(AbstractView, EventDispatcher):
     _count = NumericProperty(0)
 
     _wstart = NumericProperty(0)
-    _wend = NumericProperty(None)
+    _wend = NumericProperty(None, allownone=True)
 
     __events__ = ('on_scroll_complete', 'on_populate_complete')
 
@@ -928,6 +928,8 @@ class ListView(AbstractView, EventDispatcher):
         super(ListView, self).__init__(**kwargs)
 
         self._trigger_populate = Clock.create_trigger(self._spopulate, -1)
+        self._trigger_reset_populate = \
+            Clock.create_trigger(self._reset_spopulate, -1)
 
         self.bind(size=self._trigger_populate,
                   pos=self._trigger_populate,
@@ -939,7 +941,7 @@ class ListView(AbstractView, EventDispatcher):
         # adapter.data and other possible triggers change for view updating.
         # We don't know that these are, so we ask the adapter to set up the
         # bindings back to the view updating function here.
-        self.adapter.bind_triggers_to_view(self._trigger_populate)
+        self.adapter.bind_triggers_to_view(self._trigger_reset_populate)
 
     # Added to set data when item_strings is set in a kv template, but it will
     # be good to have also if item_strings is reset generally.
@@ -949,6 +951,7 @@ class ListView(AbstractView, EventDispatcher):
     def _scroll(self, scroll_y):
         if self.row_height is None:
             return
+        self._scroll_y = scroll_y
 
         if self.fill_all:
             return
@@ -976,8 +979,17 @@ class ListView(AbstractView, EventDispatcher):
             self._wstart = istart
             self._wend = iend + 10
 
-    def _spopulate(self, *dt):
+    def _spopulate(self, *args):
         self.populate()
+
+    def _reset_spopulate(self, *args):
+        self._wend = None
+        self.populate()
+        # simulate the scroll again, only if we already scrolled before
+        # the position might not be the same, mostly because we don't know the
+        # size of the new item.
+        if hasattr(self, '_scroll_y'):
+            self._scroll(self._scroll_y)
 
     def populate(self, istart=None, iend=None):
         container = self.container

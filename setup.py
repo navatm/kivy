@@ -427,6 +427,7 @@ setup(
         'hardware-accelerated multitouch applications.'),
     ext_modules=ext_modules,
     cmdclass=cmdclass,
+    scripts=['kivy/tools/garden'],
     packages=[
         'kivy',
         'kivy.adapters',
@@ -440,6 +441,7 @@ setup(
         'kivy.core.text',
         'kivy.core.video',
         'kivy.core.window',
+        'kivy.effects',
         'kivy.ext',
         'kivy.graphics',
         'kivy.input',

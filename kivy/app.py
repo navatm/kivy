@@ -251,7 +251,7 @@ class App(EventDispatcher):
             If a kv_file is set, it will be loaded when the application start.
             The loading of the "default" kv will be avoided.
 
-    .. versionchanged:: 1.6.1
+    .. versionchanged:: 1.7.0
         Parameter `kv_file` added.
     '''
 
@@ -519,7 +519,7 @@ class App(EventDispatcher):
     @property
     def user_data_dir(self):
         '''
-        .. versionadded:: 1.6.1
+        .. versionadded:: 1.7.0
 
         Returns the path to a directory in the users files system, which the
         application can use to store additional data.
@@ -528,11 +528,11 @@ class App(EventDispatcher):
         data like preferences, saved games, and settings. This function
         implements those conventions.
 
-        On iOS `/Documents` is returned (which is inside the apps sandbox).
+        On iOS `~/Documents<app_name>` is returned (which is inside the apps sandbox).
 
         On Android `/sdcard/<app_name>` is returned.
 
-        On Windows `~/Application Settings/<app_name>` is returned.
+        On Windows `%APPDATA%/<app_name>` is returned.
 
         On Mac OS X `~/Library/Application Support <app_name>` is returned.
 
@@ -540,11 +540,11 @@ class App(EventDispatcher):
         '''
         data_dir = ""
         if platform == 'ios':
-            data_dir = join('/Documents', self.name)
+            data_dir = join('~/Documents', self.name)
         elif platform == 'android':
             data_dir = join('/sdcard', self.name)
         elif platform == 'win':
-            data_dir = '~/Application Settings/{}'.format(self.name)
+            data_dir = os.path.join(os.environ['APPDATA'], self.name)
         elif platform == 'macosx':
             data_dir = '~/Library/Application Support/{}'.format(self.name)
         else:  # _platform == 'linux' or anything else...:

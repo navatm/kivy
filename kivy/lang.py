@@ -7,7 +7,7 @@ interactions. You could compare this language to Qt's QML
 (http://qt.nokia.com), but we included new concepts such as rule definitions
 (which are somewhat akin to what you may know from CSS), templating and so on.
 
-.. versionchanged:: 1.6.1
+.. versionchanged:: 1.7.0
 
     The Builder doesn't execute canvas expression in realtime anymore. It will
     pack all the expressions that need to be executed first, and execute them
@@ -119,7 +119,7 @@ Here is a simple example of a kv file that contains a root widget::
         text: 'Hello world'
 
 
-.. versionchanged:: 1.6.1
+.. versionchanged:: 1.7.0
 
     The indentation is not limited to 4 spaces anymore. The spacing must be a
     multiple of the number of spaces used on the first indented line.
@@ -328,11 +328,9 @@ to add a property for the image filename::
 Templates
 ---------
 
-.. versionchanged:: 1.6.1
+.. versionchanged:: 1.7.0
 
     The template usage are now deprecated, please use Dynamic classes instead.
-
-.. versionadded:: 1.0.5
 
 Syntax of template
 ~~~~~~~~~~~~~~~~~~
@@ -468,6 +466,33 @@ When you are creating a context:
                 ctxkey: 'value 1' if root.prop1 else 'value2' # << even if
                 # root.prop1 is a property, the context will not update the
                 # context
+
+Redefining a widget's style
+---------------------------
+
+Sometimes we would like to inherit from a widget in order to use its python
+properties without also using its .kv defined style. For example, we would
+like to inherit from a Label, but we would also like to define our own
+canvas instructions instead of automatically using the canvas instructions
+inherited from Label. We can achieve this by prepending a dash (-) before
+the class name in the .kv style definition.
+
+In myapp.py::
+
+    class MyWidget(Label):
+        pass
+
+and in my.kv::
+
+    <-MyWidget>:
+        canvas:
+            Color:
+                rgb: 1, 1, 1
+            Rectangle:
+                size: (32, 32)
+
+MyWidget will now have a Color and Rectangle instruction in its canvas
+without any of the instructions inherited from Label.
 
 Lang Directives
 ---------------
@@ -1410,6 +1435,8 @@ class BuilderBase(object):
 
         # if we got an id, put it in the root rule for a later global usage
         if rule.id:
+            # use only the first word as `id` discard the rest.
+            rule.id = rule.id.split('#', 1)[0].strip()
             rctx['ids'][rule.id] = widget
             # set id name as a attribute for root widget so one can in python
             # code simply access root_widget.id_name
@@ -1553,7 +1580,7 @@ class BuilderBase(object):
         '''Execute all the waiting operations, such as the execution of all the
         expressions related to the canvas.
 
-        .. versionadded:: 1.6.1
+        .. versionadded:: 1.7.0
         '''
         l = set(_delayed_calls)
         del _delayed_calls[:]
@@ -1593,6 +1620,7 @@ Builder.load_file(join(kivy_data_dir, 'style.kv'), rulesonly=True)
 if 'KIVY_PROFILE_LANG' in environ:
     import atexit
     import cgi
+
     def match_rule(fn, index, rule):
         if rule.ctx.filename != fn:
             return
