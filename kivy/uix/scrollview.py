@@ -1,4 +1,5 @@
-'''Scroll View
+'''
+Scroll View
 ===========
 
 .. versionadded:: 1.0.4
@@ -821,6 +822,89 @@ class ScrollView(StencilView):
 
     def _change_bar_color(self, inst, value):
         self._bar_color = value
+
+    _scroll_increment_x = NumericProperty(0)
+    _scroll_increment_y = NumericProperty(0)
+    scroll_increment = NumericProperty(1)
+    '''
+    By default all page methods will scroll a page. Changing
+    this value will increase or decrease the page
+
+    Example: set it to 0.5 and all page methods will only page by half.
+    '''
+
+    def _get_scroll_value(self, scroll_value, increment_value):
+        ''' Get the Scroll Value
+        Make sure the new scroll value is not below 0 or
+        above 1.
+        '''
+        new_value = scroll_value + increment_value
+        return min(1.0, max(0.0, new_value))
+
+    def _get_increment(self, size_val, viewport_val):
+        '''
+        Get the Scroll Increment based on the size
+        and viewport size values.
+        '''
+        if size_val < viewport_val:
+            diff = viewport_val - size_val
+            increment = size_val / diff
+            return increment * self.scroll_increment
+        else:
+            return False
+
+    def _set_increment(self):
+        '''
+        Set the Scroll Increment for Paging.
+        '''
+        if self.do_scroll_x:
+            increment = self._get_increment(self.width, self._viewport.width)
+            if increment:
+                self._scroll_increment_x = increment
+
+        if self.do_scroll_y:
+            increment = self._get_increment(self.height, self._viewport.height)
+            if increment:
+                self._scroll_increment_y = increment
+
+    def page_up(self):
+        ''' Page ScrollView up '''
+        self._page('y', 'up')
+
+    def page_down(self):
+        ''' Page ScrollView down '''
+        self._page('y', 'down')
+
+    def page_left(self):
+        ''' Page ScrollView left '''
+        self._page('x', 'left')
+
+    def page_right(self):
+        ''' Page ScrollView right '''
+        self._page('x', 'right')
+
+    def _page(self, coordinate, direction):
+        ''' Page the ScrollView
+
+        params:
+            coordinate: x or y
+            direction: up, down, left, right
+        '''
+        self._set_increment()
+        if coordinate == 'x':
+            if self.do_scroll_x:
+                if direction == 'left':
+                    value = self._scroll_increment_x * -1
+                else:
+                    value = self._scroll_increment_x
+                self.scroll_x = self._get_scroll_value(self.scroll_x, value)
+        elif coordinate == 'y':
+            if self.do_scroll_y:
+                if direction == 'down':
+                    value = self._scroll_increment_y * -1
+                else:
+                    value = self._scroll_increment_y
+                self.scroll_y = self._get_scroll_value(self.scroll_y, value)
 
     #
     # Private
