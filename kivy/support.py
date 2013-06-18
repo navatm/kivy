@@ -8,6 +8,8 @@ Activate other framework/toolkit inside our event loop
 __all__ = ('install_gobject_iteration', 'install_twisted_reactor',
     'install_android')
 
+import time
+
 
 def install_gobject_iteration():
     '''Import and install gobject context iteration inside our event loop.
@@ -176,7 +178,10 @@ def install_twisted_reactor(**kwargs):
     # called every frame, to process the reactors work in main thread
     def reactor_work(*args):
         Logger.trace("Support: processing twisted task queue")
+        tlimit = time.time() + ((1. / 29.97) / 10)
         while len(q):
+            if time.time() > tlimit:
+                return
             q.popleft()()
 
     # start the reactor, by telling twisted how to wake, and process
