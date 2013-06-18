@@ -8,6 +8,26 @@ import kivy
 import os
 kivy.require('1.6.1')
 
+# time to go bananas!!!
+except_callback = None
+def except_patch(fn):
+	def efn(*args, **kwargs):
+		try:
+			ret = fn(*args, **kwargs)
+		except Exception, e:
+			if except_callback:
+				except_callback(e)
+			return False
+		return ret
+	return efn
+
+from kivy.clock import ClockEvent
+orig_get_callback = ClockEvent.get_callback
+def get_callback(self):
+	cb = orig_get_callback(self)
+	return except_patch(cb)
+ClockEvent.get_callback = get_callback
+
 from kivy.lang import Builder
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.popup import Popup
@@ -82,10 +102,15 @@ class Sandbox(FloatLayout):
 	
 	loaded = []
 	
-	re_include = re.compile(r'^#\s*include:\s*(.*)$', re.MULTILINE)
+	re_include = re.compile(r'^#include:\s*(.*)$', re.MULTILINE)
 	
 	last_path = None
 	last_filename = None
+	
+	def __init__(self, *args, **kwargs):
+		super(Sandbox, self).__init__(*args, **kwargs)
+		global except_callback
+		except_callback = self.set_status
 	
 	def on_code(self, *_):
 		if self.loaded:
@@ -94,11 +119,13 @@ class Sandbox(FloatLayout):
 			self.loaded = []
 		
 		try:
-			includes = self.re_include.findall(self.code.text)
+			text = self.code.text
+			includes = self.re_include.findall(text)
 			for f in includes:
 				Builder.load_file(f)
 				self.loaded += [f]
-			widget = Builder.load_string(str(self.code.text), filename='sandboxstring.kv')
+			text = self.re_include.sub('', text)
+			widget = Builder.load_string(str(text), filename='sandboxstring.kv')
 			self.loaded += ['sandboxstring.kv']
 		except Exception, e:
 			if self.code.text.find('#pdb') != -1:
