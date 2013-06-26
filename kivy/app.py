@@ -157,9 +157,9 @@ user, in order to adapt or reload your UI. You can overload the
             if config is self.config:
                 token = (section, key)
                 if token == ('section1', 'key1'):
-                    print 'Our key1 have been changed to', value
+                    print('Our key1 have been changed to', value)
                 elif token == ('section1', 'key2'):
-                    print 'Our key2 have been changed to', value
+                    print('Our key2 have been changed to', value)
 
 One last note, the Kivy configuration panel is added by default in the settings
 instance. If you don't want it, you can declare your Application like this::
@@ -200,6 +200,18 @@ The current implemented Pause mechanism is:
     #. We got a `resume`, :func:`App.on_resume` is called.
     #. If our app memory has been reclaimed by the OS, then nothing will be
        called.
+       
+Here is a simple example of how on_pause() should be used::
+
+   class TestApp(App):
+   
+      def on_pause(self):
+         # Here you can save data if needed
+         return True
+   
+      def on_resume(self):
+         # Here you can check if any data needs replacing (usually nothing)
+         pass
 
 .. warning::
 

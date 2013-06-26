@@ -30,7 +30,7 @@ screen, you absolutely need to give a name to it::
     sm = ScreenManager()
 
     # Add few screens
-    for i in xrange(4):
+    for i in range(4):
         screen = Screen(name='Title %d' % i)
         sm.add_widget(screen)
 
@@ -138,7 +138,7 @@ from kivy.lang import Builder
 from kivy.graphics.transformation import Matrix
 from kivy.graphics import RenderContext, Rectangle, Fbo, \
         ClearColor, ClearBuffers, BindTexture, Rotate
-from kivy.config import Config                       
+from kivy.config import Config
 
 
 class ScreenManagerException(Exception):
@@ -428,7 +428,7 @@ class ShaderTransition(TransitionBase):
         self.fbo_out = self.make_screen_fbo(self.screen_out)
         self.manager.canvas.add(self.fbo_in)
         self.manager.canvas.add(self.fbo_out)
-        
+
         screen_rotation = Config.getfloat('graphics', 'rotation')
         pos = (0, 1)
         if screen_rotation == 90:
@@ -442,8 +442,8 @@ class ShaderTransition(TransitionBase):
         with self.render_ctx:
             BindTexture(texture=self.fbo_out.texture, index=1)
             BindTexture(texture=self.fbo_in.texture, index=2)
-            Rotate(screen_rotation, 0, 0 , 1)
-            Rectangle(size=(1, -1), pos=pos)        
+            Rotate(screen_rotation, 0, 0, 1)
+            Rectangle(size=(1, -1), pos=pos)
         self.render_ctx['projection_mat'] = Matrix().\
             view_clip(0, 1, 0, 1, 0, 1, 0)
         self.render_ctx['tex_out'] = 1
@@ -684,7 +684,7 @@ class ScreenManager(FloatLayout):
         if not screen in self.screens:
             return
         if self.current_screen == screen:
-            other = self.next()
+            other = next(self)
             if other:
                 self.current = other
         screen.manager = None
@@ -739,7 +739,7 @@ class ScreenManager(FloatLayout):
         '''
         return bool([s for s in self.screens if s.name == name])
 
-    def next(self):
+    def __next__(self):
         '''Return the name of the next screen from the screen list.
         '''
         screens = self.screens
@@ -817,7 +817,7 @@ if __name__ == '__main__':
             #d = ('left', 'up', 'down', 'right')
             #di = d.index(self.sm.transition.direction)
             #self.sm.transition.direction = d[(di + 1) % len(d)]
-            self.sm.current = self.sm.next()
+            self.sm.current = next(self.sm)
 
         def remove_screen(self, *l):
             self.sm.remove_widget(self.sm.get_screen('test1'))

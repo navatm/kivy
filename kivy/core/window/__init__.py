@@ -156,9 +156,9 @@ class Keyboard(EventDispatcher):
         :data:`Keyboard.keycodes`. If the value is not found inside the
         keycodes, it will return ''.
         '''
-        keycodes = Keyboard.keycodes.values()
+        keycodes = list(Keyboard.keycodes.values())
         if value in keycodes:
-            return Keyboard.keycodes.keys()[keycodes.index(value)]
+            return list(Keyboard.keycodes.keys())[keycodes.index(value)]
         return ''
 
 
@@ -221,7 +221,7 @@ class WindowBase(EventDispatcher):
     _size = ListProperty([0, 0])
     _modifiers = ListProperty([])
     _rotation = NumericProperty(0)
-    _clearcolor = ListProperty([0, 0, 0, 0])
+    _clearcolor = ObjectProperty([0, 0, 0, 1])
 
     children = ListProperty([])
     '''List of children of this window.
@@ -298,6 +298,11 @@ class WindowBase(EventDispatcher):
 
         # don't clear background at all
         Window.clearcolor = None
+
+    .. versionchanged:: 1.7.2
+
+        Clear color default value is now: (0, 0, 0, 1).
+
     '''
 
     # make some property read-only
@@ -427,7 +432,7 @@ class WindowBase(EventDispatcher):
         if 'rotation' not in kwargs:
             kwargs['rotation'] = Config.getint('graphics', 'rotation')
         if 'position' not in kwargs:
-            kwargs['position'] = Config.get('graphics', 'position', 'auto')
+            kwargs['position'] = Config.getdefault('graphics', 'position', 'auto')
         if 'top' in kwargs:
             kwargs['position'] = 'custom'
             kwargs['top'] = kwargs['top']
@@ -703,7 +708,7 @@ class WindowBase(EventDispatcher):
                 w.width = shw * width
             elif shh:
                 w.height = shh * height
-            for key, value in w.pos_hint.iteritems():
+            for key, value in w.pos_hint.items():
                 if key == 'x':
                     w.x = value * width
                 elif key == 'right':
@@ -860,7 +865,7 @@ class WindowBase(EventDispatcher):
         This will ensure that no virtual keyboard / system keyboard are actually
         requested. All will be closed.
         '''
-        for key in self._keyboards.keys()[:]:
+        for key in list(self._keyboards.keys())[:]:
             keyboard = self._keyboards[key]
             if keyboard:
                 keyboard.release()
@@ -971,6 +976,7 @@ class WindowBase(EventDispatcher):
 
 #: Instance of a :class:`WindowBase` implementation
 Window = core_select_lib('window', (
+    ('egl_rpi', 'window_egl_rpi', 'WindowEglRpi'),
     ('pygame', 'window_pygame', 'WindowPygame'),
     ('sdl', 'window_sdl', 'WindowSDL'),
     ('x11', 'window_x11', 'WindowX11'),

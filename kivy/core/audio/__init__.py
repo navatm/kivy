@@ -8,8 +8,8 @@ Load an audio sound and play it with::
 
     sound = SoundLoader.load('mytest.wav')
     if sound:
-        print "Sound found at %s" % sound.source
-        print "Sound is %.3f seconds" % sound.length
+        print("Sound found at %s" % sound.source)
+        print("Sound is %.3f seconds" % sound.length)
         sound.play()
 
 You should not use directly the sound class yourself. The result will use the
@@ -24,14 +24,13 @@ class depending the file.
 
 __all__ = ('Sound', 'SoundLoader')
 
-import sys
 from kivy.logger import Logger
 from kivy.event import EventDispatcher
 from kivy.core import core_register_libs
 from kivy.utils import platform
 from kivy.resources import resource_find
 from kivy.properties import StringProperty, NumericProperty, OptionProperty, \
-        AliasProperty
+        AliasProperty, BooleanProperty
 
 
 class SoundLoader:
@@ -98,6 +97,14 @@ class Sound(EventDispatcher):
     .. versionadded:: 1.3.0
 
     :data:`state` is an :class:`~kivy.properties.OptionProperty`, read-only.
+    '''
+
+    loop = BooleanProperty(False)
+    '''Set to True if the sound should automatically loop when it finishes.
+
+    .. versionadded:: 1.8.0
+
+    :data:`loop` is an :class:`~kivy.properties.BooleanProperty`, default to False.
     '''
 
     #

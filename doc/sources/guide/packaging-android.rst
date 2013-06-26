@@ -59,6 +59,12 @@ examples of building distributions::
     ./distribute.sh -m "openssl kivy"
     ./distribute.sh -m "pil ffmpeg kivy"
 
+.. note::
+
+    The order of modules provided are important, as a general rule put
+    dependencies first and then the dependent modules, C libs come first
+    then python modules.
+
 To see the available options for distribute.sh, type::
 
     ./distribute.sh -h
@@ -77,6 +83,14 @@ Inside the distribution (`dist/default` by default), you have a tool named
                --orientation <landscape|portrait>
                --permission <android permission like VIBRATE> (multiple allowed)
                <debug|release> <installd|installr|...>
+               
+An example of using multiple permissions::
+
+    --permission INTERNET --permission WRITE_EXTERNAL_STORAGE
+    
+Full list of available permissions are documented here:
+http://developer.android.com/reference/android/Manifest.permission.html
+
 
 For example, if we imagine that the touchtracer demo of Kivy is in the directory
 ~/kivy/examples/demo/touchtracer, you can do::

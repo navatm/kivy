@@ -23,7 +23,7 @@ then, the main button text will display the selection of the dropdown. ::
 
     # create a dropdown with 10 button
     dropdown = DropDown()
-    for index in xrange(10):
+    for index in range(10):
         btn = Button(text='Value %d' % index, size_hint_y=None, height=44)
 
         # for each button, attach a callback that will call the select() method
@@ -288,7 +288,7 @@ if __name__ == '__main__':
     def show_dropdown(button, *largs):
         dp = DropDown()
         dp.bind(on_select=lambda instance, x: setattr(button, 'text', x))
-        for i in xrange(10):
+        for i in range(10):
             item = Button(text='hello %d' % i, size_hint_y=None, height=44)
             item.bind(on_release=lambda btn: dp.select(btn.text))
             dp.add_widget(item)

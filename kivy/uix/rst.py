@@ -27,7 +27,7 @@ Usage with Text
     This is an **emphased text**, some ``interpreted text``.
     And this is a reference to top_::
 
-        $ print "Hello world"
+        $ print("Hello world")
 
     """
     document = RstDocument(text=text)
@@ -58,9 +58,10 @@ __all__ = ('RstDocument', )
 import os
 from os.path import dirname, join, exists
 from kivy.clock import Clock
+from kivy.compat import PY2
 from kivy.properties import ObjectProperty, NumericProperty, \
         DictProperty, ListProperty, StringProperty, \
-        BooleanProperty
+        BooleanProperty, OptionProperty
 from kivy.lang import Builder
 from kivy.uix.widget import Widget
 from kivy.uix.scrollview import ScrollView
@@ -105,7 +106,7 @@ if 'KIVY_DOC' not in os.environ:
     generic_docroles = {
         'doc': role_doc}
 
-    for rolename, nodeclass in generic_docroles.iteritems():
+    for rolename, nodeclass in generic_docroles.items():
         generic = roles.GenericRole(rolename, nodeclass)
         role = roles.CustomRole(rolename, generic, {'classes': [rolename]})
         roles.register_local_role(rolename, role)
@@ -389,6 +390,27 @@ class RstDocument(ScrollView):
     None.
     '''
 
+    source_encoding = StringProperty('utf-8')
+    '''encoding to be used for the :data:`source` file.
+
+    :data:`source_encoding` is a :class:`~kivy.properties.StringProperty`,
+    default to `utf-8`.
+
+    .. Note::
+        it's your responsibility to ensure that the value provided is a
+        valid codec supported by python.
+    '''
+
+    source_error = OptionProperty('strict',
+                                  options=('strict', 'ignore', 'replace',
+                                    'xmlcharrefreplace', 'backslashreplac'))
+    '''error handling to be used while encoding the :data:`source` file.
+
+    :data:`source_eerror` is a :class:`~kivy.properties.OptionProperty`,
+    default to `strict`. Can be one of 'strict', 'ignore', 'replace',
+    'xmlcharrefreplace', 'backslashreplac'
+    '''
+
     text = StringProperty(None)
     '''RST markup text of the document.
 
@@ -479,7 +501,7 @@ class RstDocument(ScrollView):
             return filename
         return join(self.document_root, filename)
 
-    def preload(self, filename):
+    def preload(self, filename, encoding='utf-8', errors='strict'):
         '''Preload a rst file to get its toctree, and its title.
 
         The result will be stored in :data:`toctrees` with the ``filename`` as
@@ -490,8 +512,8 @@ class RstDocument(ScrollView):
         if not exists(filename):
             return
 
-        with open(filename) as fd:
-            text = fd.read()
+        with open(filename, 'rb') as fd:
+            text = fd.read().decode(encoding, errors)
         # parse the source
         document = utils.new_document('Document', self._settings)
         self._parser.parse(text, document)
@@ -499,12 +521,13 @@ class RstDocument(ScrollView):
         visitor = _ToctreeVisitor(document)
         document.walkabout(visitor)
         self.toctrees[filename] = visitor.toctree
+        return text
 
     def _load_from_source(self):
         filename = self.resolve_path(self.source)
-        self.preload(filename)
-        with open(filename) as fd:
-            self.text = fd.read()
+        self.text = self.preload(filename,
+                                 self.source_encoding,
+                                 self.source_error)
 
     def _load_from_text(self, *largs):
         try:
@@ -515,7 +538,10 @@ class RstDocument(ScrollView):
 
             # parse the source
             document = utils.new_document('Document', self._settings)
-            self._parser.parse(self.text, document)
+            text = self.text
+            if PY2 and type(text) is str:
+                text = text.decode('utf-8')
+            self._parser.parse(text, document)
 
             # fill the current document node
             visitor = _Visitor(self, document)
@@ -715,7 +741,6 @@ class _ToctreeVisitor(nodes.NodeVisitor):
 
     def dispatch_visit(self, node):
         cls = node.__class__
-        #print '>>>', cls, node.attlist() if hasattr(node, 'attlist') else ''
         if cls is nodes.section:
             section = {
                 'ids': node['ids'],
@@ -734,7 +759,6 @@ class _ToctreeVisitor(nodes.NodeVisitor):
 
     def dispatch_departure(self, node):
         cls = node.__class__
-        #print '<--', cls, node.attlist() if hasattr(node, 'attlist') else ''
         if cls is nodes.section:
             self.pop()
         elif cls is nodes.title:
@@ -764,7 +788,6 @@ class _Visitor(nodes.NodeVisitor):
 
     def dispatch_visit(self, node):
         cls = node.__class__
-        #print '>>>', cls, node.attlist() if hasattr(node, 'attlist') else ''
         if cls is nodes.document:
             self.push(self.root.content)
 
@@ -949,7 +972,6 @@ class _Visitor(nodes.NodeVisitor):
 
     def dispatch_departure(self, node):
         cls = node.__class__
-        #print '<--', cls
         if cls is nodes.document:
             self.pop()
 

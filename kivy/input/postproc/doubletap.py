@@ -38,6 +38,10 @@ class InputPostprocDoubleTap(object):
         must be ok, also, the touch profile must be compared so the kind
         of touch is the same
         '''
+        ref_button = None
+        if 'button' in ref.profile:
+            ref_button = ref.button
+
         for touchid in self.touches:
             if ref.uid == touchid:
                 continue
@@ -53,9 +57,11 @@ class InputPostprocDoubleTap(object):
                 continue
             if touch.is_mouse_scrolling or ref.is_mouse_scrolling:
                 continue
-            if 'button' in touch.profile or 'button' in ref.profile:
-                if 'button' not in ref.profile or ref.button != touch.button:
-                    continue
+            touch_button = None
+            if 'button' in touch.profile:
+                touch_button = touch.button
+            if touch_button != ref_button:
+                continue
             touch.double_tap_distance = distance
             return touch
         return None
@@ -81,12 +87,16 @@ class InputPostprocDoubleTap(object):
 
         # second, check if up-touch is timeout for double tap
         time_current = Clock.get_time()
-        for touchid in self.touches.keys()[:]:
+        to_delete = []
+        for touchid in self.touches.keys():
             etype, touch = self.touches[touchid]
             if etype != 'end':
                 continue
             if time_current - touch.time_start < self.double_tap_time:
                 continue
+            to_delete.append(touchid)
+
+        for touchid in to_delete:
             del self.touches[touchid]
 
         return events
