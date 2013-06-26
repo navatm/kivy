@@ -279,7 +279,7 @@ cdef class Context:
 
         # FIXME we are doing gc for each time we dealloc things. But if you have
         # "big" apps, this might just slow it down.
-        self.gc()
+        #self.gc()
 
         if len(self.lr_vbo):
             Logger.trace('Context: releasing %d vbos' % len(self.lr_vbo))
