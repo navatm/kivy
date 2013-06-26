@@ -186,7 +186,7 @@ For example the TextInput class has a ``focus`` property whose auto-generated
 .. code-block:: kv
 
     TextInput:
-        on_focus: print args 
+        on_focus: print(args)
 
 
 Extend canvas
@@ -360,7 +360,7 @@ In myapp.py:
     class MyFirstWidget(BoxLayout):
 
         def text(self, val):
-            print 'text input text is: {txt}'.format(txt=val)
+            print('text input text is: {txt}'.format(txt=val))
 
     class MySecondWidget(BoxLayout):
 

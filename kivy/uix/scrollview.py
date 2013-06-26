@@ -62,7 +62,7 @@ identical to that of the ScrollView (size_hint_x=1, default), and set the
 size_hint_y property to None::
 
     layout = GridLayout(cols=1, spacing=10, size_hint_y=None)
-    # Make sure the height is such that there is something to scroll.
+    #Make sure the height is such that there is something to scroll.
     layout.bind(minimum_height=layout.setter('height'))
     for i in range(30):
         btn = Button(text=str(i), size_hint_y=None, height=40)
@@ -417,6 +417,8 @@ class ScrollView(StencilView):
         if not self.collide_point(*touch.pos):
             touch.ud[self._get_uid('svavoid')] = True
             return
+        if self.disabled:
+            return True
         if self._touch:
             return super(ScrollView, self).on_touch_down(touch)
 

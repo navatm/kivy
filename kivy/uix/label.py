@@ -86,7 +86,7 @@ happens on it, the function ``print_it`` will be called with the name of the
 reference::
 
     def print_it(instance, value):
-        print 'User clicked on', value
+        print('User clicked on', value)
     widget = Label(text='Hello [ref=world]World[/ref]', markup=True)
     widget.bind(on_ref_press=print_it)
 
@@ -153,7 +153,7 @@ class Label(Widget):
            (not markup and cls is not CoreLabel):
             # markup have change, we need to change our rendering method.
             d = Label._font_properties
-            dkw = dict(zip(d, [getattr(self, x) for x in d]))
+            dkw = dict(list(zip(d, [getattr(self, x) for x in d])))
             if markup:
                 self._label = CoreMarkupLabel(**dkw)
             else:
@@ -213,7 +213,7 @@ class Label(Widget):
         tx -= self.center_x - self.texture_size[0] / 2.
         ty -= self.center_y - self.texture_size[1] / 2.
         ty = self.texture_size[1] - ty
-        for uid, zones in self.refs.iteritems():
+        for uid, zones in self.refs.items():
             for zone in zones:
                 x, y, w, h = zone
                 if x <= tx <= w and y <= ty <= h:
@@ -227,6 +227,16 @@ class Label(Widget):
     #
     # Properties
     #
+
+    disabled_color = ListProperty([1, 1, 1, .3])
+    '''Text color, in the format (r, g, b, a)
+
+    .. versionadded:: 1.8.0
+
+    :data:`disabled_color` is a :class:`~kivy.properties.ListProperty`, default to [1, 1,
+    1, .5].
+    '''
+
     text = StringProperty('')
     '''Text of the label.
 
@@ -500,7 +510,7 @@ class Label(Widget):
     You can bind a ref event like this::
 
         def print_it(instance, value):
-            print 'User click on', value
+            print('User click on', value)
         widget = Label(text='Hello [ref=world]World[/ref]', markup=True)
         widget.on_ref_press(print_it)
 

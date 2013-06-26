@@ -130,8 +130,8 @@ class::
         a = NumericProperty(1)
 
     def callback(instance, value):
-        print 'My callback is call from', instance,
-        print 'and the a value changed to', value
+        print('My callback is call from', instance)
+        print('and the a value changed to', value)
 
     ins = MyClass()
     ins.bind(a=callback)
@@ -150,7 +150,7 @@ If you created the class yourself, you can use the 'on_<propname>' callback::
         a = NumericProperty(1)
 
         def on_a(self, instance, value):
-            print 'My property a changed to', value
+            print('My property a changed to', value)
 
 .. warning::
 
@@ -171,7 +171,10 @@ __all__ = ('Property',
            'OptionProperty', 'ReferenceListProperty', 'AliasProperty',
            'DictProperty', 'VariableListProperty')
 
+include "graphics/config.pxi"
+
 from weakref import ref
+from kivy.compat import string_types
 
 cdef float g_dpi = -1
 cdef float g_density = -1
@@ -414,7 +417,7 @@ cdef class NumericProperty(Property):
 
     >>> wid = Widget()
     >>> wid.x = 42
-    >>> print wid.x
+    >>> print(wid.x)
     42
     >>> wid.x = "plop"
      Traceback (most recent call last):
@@ -494,8 +497,8 @@ cdef class StringProperty(Property):
     cdef check(self, EventDispatcher obj, value):
         if Property.check(self, obj, value):
             return True
-        if not isinstance(value, basestring):
-            raise ValueError('%s.%s accept only str/unicode' % (
+        if not isinstance(value, string_types):
+            raise ValueError('%s.%s accept only str' % (
                 obj.__class__.__name__,
                 self.name))
 
@@ -824,7 +827,7 @@ cdef class BoundedNumericProperty(Property):
                 number = BoundedNumericProperty(0, min=-5, max=5)
 
             widget = MyWidget()
-            print widget.property('number').get_min(widget)
+            print(widget.property('number').get_min(widget))
             # will output -5
 
         .. versionadded:: 1.1.0
@@ -880,11 +883,11 @@ cdef class BoundedNumericProperty(Property):
                     obj.__class__.__name__,
                     self.name, _min))
         elif ps.bnum_use_min == 2:
-            _min = ps.bnum_f_min
-            if value < _min:
-                raise ValueError('%s.%s is below the minimum bound (%d)' % (
+            _f_min = ps.bnum_f_min
+            if value < _f_min:
+                raise ValueError('%s.%s is below the minimum bound (%f)' % (
                     obj.__class__.__name__,
-                    self.name, _min))
+                    self.name, _f_min))
         if ps.bnum_use_max == 1:
             _max = ps.bnum_max
             if value > _max:
@@ -892,11 +895,11 @@ cdef class BoundedNumericProperty(Property):
                     obj.__class__.__name__,
                     self.name, _max))
         elif ps.bnum_use_max == 2:
-            _max = ps.bnum_f_max
-            if value > _max:
-                raise ValueError('%s.%s is above the maximum bound (%d)' % (
+            _f_max = ps.bnum_f_max
+            if value > _f_max:
+                raise ValueError('%s.%s is above the maximum bound (%f)' % (
                     obj.__class__.__name__,
-                    self.name, _max))
+                    self.name, _f_max))
         return True
 
     property bounds:

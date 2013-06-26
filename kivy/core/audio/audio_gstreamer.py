@@ -39,7 +39,10 @@ class SoundGstreamer(Sound):
         t = message.type
         if t == gst.MESSAGE_EOS:
             self._data.set_state(gst.STATE_NULL)
-            self.stop()
+            if self.loop:
+                self.play()
+            else:
+                self.stop()
         elif t == gst.MESSAGE_ERROR:
             self._data.set_state(gst.STATE_NULL)
             err, debug = message.parse_error()
@@ -50,6 +53,7 @@ class SoundGstreamer(Sound):
     def play(self):
         if not self._data:
             return
+        self._data.set_property('volume', self.volume)
         self._data.set_state(gst.STATE_PLAYING)
         super(SoundGstreamer, self).play()
 
@@ -104,9 +108,9 @@ class SoundGstreamer(Sound):
                     pass
         return 0
 
-    def on_volume(self, _, volume):
+    def on_volume(self, instance, volume):
         if self._data is not None:
-            self._data.props.volume = self._volume = volume
+            self._data.set_property('volume', volume)
 
     def _get_length(self):
         if self._data is not None:

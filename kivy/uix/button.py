@@ -16,7 +16,7 @@ To attach a callback when the button is pressed (clicked/touched), use
 :class:`~kivy.uix.widget.Widget.bind`::
 
     def callback(instance):
-        print 'The button <%s> is being pressed' % instance.text
+        print('The button <%s> is being pressed' % instance.text)
 
     btn1 = Button(text='Hello world 1')
     btn1.bind(on_press=callback)
@@ -27,7 +27,7 @@ If you want to be notified every time the button state changes, you can attach
 to the :data:`Button.state` property::
 
     def callback(instance, value):
-        print 'My button <%s> state is <%s>' % (instance, value)
+        print('My button <%s> state is <%s>' % (instance, value))
     btn1 = Button(text='Hello world 1')
     btn1.bind(state=callback)
 
@@ -37,7 +37,7 @@ __all__ = ('Button', )
 
 from kivy.uix.label import Label
 from kivy.properties import OptionProperty, StringProperty, ListProperty
-
+from kivy.clock import Clock
 
 class Button(Label):
     '''Button class, see module documentation for more information.
@@ -87,6 +87,28 @@ class Button(Label):
 
     :data:`background_down` is an :class:`~kivy.properties.StringProperty`,
     default to 'atlas://data/images/defaulttheme/button_pressed'
+    '''
+
+    background_disabled_normal = StringProperty(
+        'atlas://data/images/defaulttheme/button_disabled')
+    '''Background image of the button used for default graphical representation,
+    when the button is not pressed.
+
+    .. versionadded:: 1.8.0
+
+    :data:`background_normal` is an :class:`~kivy.properties.StringProperty`,
+    default to 'atlas://data/images/defaulttheme/button_disabled'
+    '''
+
+    background_disabled_down = StringProperty(
+        'atlas://data/images/defaulttheme/button_disabled_pressed')
+    '''Background image of the button used for default graphical representation,
+    when the button is pressed.
+
+    .. versionadded:: 1.8.0
+
+    :data:`background_down` is an :class:`~kivy.properties.StringProperty`,
+    default to 'atlas://data/images/defaulttheme/button_disabled_pressed'
     '''
 
     border = ListProperty([16, 16, 16, 16])
@@ -146,3 +168,23 @@ class Button(Label):
     def on_release(self):
         pass
 
+    def trigger_action(self, duration=0.1):
+        '''Trigger whatever action(s) have been bound to the button by calling
+        both the on_press and on_release callbacks.
+
+        This simulates a quick button press without using any touch events.
+
+        Duration is the length of the press in seconds. Pass 0 if you want
+        the action to happen instantly.
+
+        .. versionadded:: 1.8.0
+        '''
+        self._do_press()
+        self.dispatch("on_press")
+        def trigger_release(dt):
+            self._do_release()
+            self.dispatch("on_release")
+        if not duration:
+            trigger_release(0)
+        else:
+            Clock.schedule_once(trigger_release, duration)
