@@ -100,14 +100,14 @@ class LabelBase(object):
                  bold=False, italic=False, halign='left', valign='bottom',
                  shorten=False, shorten_at_end=False, shorten_by_padding=False,
                  text_size=None, mipmap=False, color=None, line_height=1.0,
-                 **kwargs):
+                 outline=False, **kwargs):
 
         options = {'text': text, 'font_size': font_size,
             'font_name': font_name, 'bold': bold, 'italic': italic,
             'halign': halign, 'valign': valign, 'shorten': shorten,
             'shorten_by_padding': shorten_by_padding,
             'shorten_at_end': shorten_at_end,
-            'mipmap': mipmap, 'line_height': line_height}
+            'mipmap': mipmap, 'line_height': line_height, 'outline': outline}
 
         options['color'] = color or (1, 1, 1, 1)
         options['padding'] = kwargs.get('padding', 0)
