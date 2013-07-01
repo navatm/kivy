@@ -24,9 +24,9 @@ Usage example::
     ...
     my_label = CoreLabel()
     my_label.text = 'hello'
-    # the label is usually not drawn until needed, so force it to draw.
+    # label is usully not drawn till absolutely needed, force it to draw.
     my_label.refresh()
-    # Now access the texture of the label and use it wherever and
+    # Now access the texture of the label and use it where ever,
     # however you may please.
     hello_texture = my_label.texture
 
@@ -139,14 +139,14 @@ class LabelBase(object):
                  bold=False, italic=False, halign='left', valign='bottom',
                  shorten=False, text_size=None, mipmap=False, color=None,
                  line_height=1.0, strip=False, shorten_from='center',
-                 split_str=' ', **kwargs):
+                 split_str=' ', outline=False, **kwargs):
 
         options = {'text': text, 'font_size': font_size,
                    'font_name': font_name, 'bold': bold, 'italic': italic,
                    'halign': halign, 'valign': valign, 'shorten': shorten,
                    'mipmap': mipmap, 'line_height': line_height,
                    'strip': strip, 'shorten_from': shorten_from,
-                   'split_str': split_str}
+                   'split_str': split_str, 'outline': outline}
 
         options['color'] = color or (1, 1, 1, 1)
         options['padding'] = kwargs.get('padding', (0, 0))

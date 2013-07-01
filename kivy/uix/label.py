@@ -192,6 +192,8 @@ class Label(Widget):
             dkw[x] = partial(self._trigger_texture_update, x)
         self.bind(**dkw)
 
+        self.outline = kwargs.get('outline', False)
+        
         self._label = None
         self._create_label()
 
@@ -213,7 +215,7 @@ class Label(Widget):
             if markup:
                 self._label = CoreMarkupLabel(**dkw)
             else:
-                self._label = CoreLabel(**dkw)
+                self._label = CoreLabel(outline=self.outline,**dkw)
 
     def _trigger_texture_update(self, name=None, source=None, value=None):
         # check if the label core class need to be switch to a new one
