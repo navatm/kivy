@@ -30,7 +30,7 @@ screen, you absolutely need to give a name to it::
     sm = ScreenManager()
 
     # Add few screens
-    for i in range(4):
+    for i in xrange(4):
         screen = Screen(name='Title %d' % i)
         sm.add_widget(screen)
 
@@ -684,7 +684,7 @@ class ScreenManager(FloatLayout):
         if not screen in self.screens:
             return
         if self.current_screen == screen:
-            other = next(self)
+            other = self.next()
             if other:
                 self.current = other
         screen.manager = None
@@ -739,7 +739,7 @@ class ScreenManager(FloatLayout):
         '''
         return bool([s for s in self.screens if s.name == name])
 
-    def __next__(self):
+    def next(self):
         '''Return the name of the next screen from the screen list.
         '''
         screens = self.screens
@@ -821,7 +821,7 @@ if __name__ == '__main__':
             #d = ('left', 'up', 'down', 'right')
             #di = d.index(self.sm.transition.direction)
             #self.sm.transition.direction = d[(di + 1) % len(d)]
-            self.sm.current = next(self.sm)
+            self.sm.current = self.sm.next()
 
         def remove_screen(self, *l):
             self.sm.remove_widget(self.sm.get_screen('test1'))
