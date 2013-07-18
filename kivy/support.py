@@ -175,13 +175,10 @@ def install_twisted_reactor(**kwargs):
         Logger.trace("Support: twisted wakeup call to schedule task")
         q.append(twisted_loop_next)
 
-    oneframe = 1. / 29.97
-    framelimit = oneframe * 0.2
     # called every frame, to process the reactors work in main thread
     def reactor_work(*args):
         Logger.trace("Support: processing twisted task queue")
-        #tlimit = time.time() + framelimit
-        while len(q):# and time.time() < tlimit:
+        while len(q):
             q.popleft()()
 
     # start the reactor, by telling twisted how to wake, and process
