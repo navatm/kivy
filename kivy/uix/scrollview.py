@@ -601,6 +601,9 @@ class ScrollView(StencilView):
         Clock.unschedule(self._start_decrease_alpha)
         Clock.schedule_once(self._start_decrease_alpha, .5)
 
+        # Update the Effect if using scroll y or x.
+        self._update_effect_bounds()
+
     def _start_decrease_alpha(self, *l):
         self.bar_alpha = 1.
         Animation(bar_alpha=0., d=.5, t='out_quart').start(self)
