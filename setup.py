@@ -316,6 +316,7 @@ graphics_flags = determine_graphics_pxd()
 # -----------------------------------------------------------------------------
 # sources to compile
 sources = {
+	'uix/_label.pyx': base_flags,
 	'uix/_widget.pyx': base_flags,
 	'_lang.pyx': base_flags,
     '_event.pyx': base_flags,
