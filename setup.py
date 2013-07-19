@@ -316,7 +316,7 @@ graphics_flags = determine_graphics_pxd()
 # -----------------------------------------------------------------------------
 # sources to compile
 sources = {
-	'lang.pyx': base_flags,
+	'_lang.pyx': base_flags,
     '_event.pyx': base_flags,
     'properties.pyx': base_flags,
     'graphics/buffer.pyx': base_flags,
