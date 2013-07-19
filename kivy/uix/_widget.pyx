@@ -647,7 +647,3 @@ class Widget(WidgetBase):
     :data:`disabled` is a :class:`~kivy.properties.BooleanProperty`,
     default to False.
     '''
-try:
-	from _widget import Widget
-except ImportError:
-	pass
