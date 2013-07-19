@@ -586,6 +586,7 @@ from kivy.compat import PY2, iteritems, iterkeys
 import kivy.metrics as Metrics
 from weakref import ref
 
+from kivy.langhelper import custom_callback
 
 trace = Logger.trace
 global_idmap = {}
@@ -1172,12 +1173,6 @@ class Parser(object):
             i += 1
 
         return objects, []
-
-
-def custom_callback(__kvlang__, idmap, *largs, **kwargs):
-    idmap['args'] = largs
-    exec(__kvlang__.co_value, idmap)
-
 
 def create_handler(iself, element, key, value, rule, idmap, delayed=False):
     locals()['__kvlang__'] = rule
