@@ -1628,11 +1628,6 @@ class BuilderBase(object):
                 raise BuilderException(prule.ctx, prule.line,
                         '{}: {}'.format(e.__class__.__name__, e))
 
-try:
-	from kivy._lang import BuilderBase
-except ImportError:
-	pass
-
 #: Main instance of a :class:`BuilderBase`.
 Builder = BuilderBase()
 Builder.load_file(join(kivy_data_dir, 'style.kv'), rulesonly=True)

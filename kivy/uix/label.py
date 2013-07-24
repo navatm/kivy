@@ -549,7 +549,3 @@ class Label(Widget):
         True.
 
     '''
-try:
-	from kivy.uix._label import Label
-except ImportError:
-	pass
