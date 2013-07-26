@@ -1,5 +1,7 @@
 '''
 Usage: python cythonize.py path_to_setup.py py_file_path ...
+
+python cythonize.py setup.py `cat cython_list
 '''
 
 from sys import argv
