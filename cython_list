@@ -1,4 +1,8 @@
 kivy/uix/label.py
 kivy/uix/listview.py
-kivy/lang.py
+kivy/uix/widget.py
+kivy/uix/boxlayout.py
 kivy/adapters/listadapter.py
+kivy/lang.py
+kivy/base.py
+kivy/clock.py
