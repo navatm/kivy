@@ -2,6 +2,8 @@ kivy/uix/label.py
 kivy/uix/listview.py
 kivy/uix/widget.py
 kivy/uix/boxlayout.py
+kivy/uix/layout.py
+kivy/core/text/__init__.py
 kivy/adapters/listadapter.py
 kivy/lang.py
 kivy/base.py
