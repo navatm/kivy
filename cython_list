@@ -5,6 +5,7 @@ kivy/uix/boxlayout.py
 kivy/uix/layout.py
 kivy/uix/gridlayout.py
 kivy/core/text/__init__.py
+kivy/core/window/window_pygame.py
 kivy/adapters/listadapter.py
 kivy/lang.py
 kivy/base.py

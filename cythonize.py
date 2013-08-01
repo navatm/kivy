@@ -29,7 +29,8 @@ for py_path, pyx_path in zip(py_path_list, pyx_path_list):
 	# add pyx files to sources list in setup.py
 	setup_py.insert(
 		setup_py.index('sources = {\n') + 1,
-		"    '{}': " + flags() + ",\n".format('/'.join(pyx_path.split('/')[1:])))
+		("    '{}': " + flags() + ",\n").format(
+			'/'.join(pyx_path.split('/')[1:])))
 
 
 
