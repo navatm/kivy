@@ -19,17 +19,20 @@ with open(setup_py_path, 'r') as setup_py_file:
 for py_path, pyx_path in zip(py_path_list, pyx_path_list):
 	rename(py_path, pyx_path)
 
-	# use graphics flags for certain files
-	def flags():
-		return ('base_flags'
-			if pyx_path not in ['kivy/core/window/window_pygame.pyx', 'kivy/core/text/__init__.pyx']
-			else 'merge(base_flags, gl_flags, graphics_flags)')
-
 	# add pyx files to sources list in setup.py
 	setup_py.insert(
 		setup_py.index('sources = {\n') + 1,
-		("    '{}': " + flags() + ",\n").format(
+		("    '{}': base_flags,\n").format(
 			'/'.join(pyx_path.split('/')[1:])))
 
+# make core/text/__init__.py import from pyx file
+with open('kivy/core/text/__init__.py', 'rw') as py_file:
+	lines = py_file.readlines()
+	lines[
+		lines.index("DEFAULT_FONT = 'DroidSans'\n"):
+		lines.index("        doc='''(deprecated) Use text_size instead.''')\n") + 1
+	] = 'from ctext import *\n'
+	py_file.writelines(lines)
+	
 with open(setup_py_path, 'w') as setup_py_file:
 	setup_py_file.writelines(setup_py)
