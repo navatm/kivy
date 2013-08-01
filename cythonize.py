@@ -5,7 +5,6 @@ python cythonize.py setup.py `cat cython_list
 '''
 
 from sys import argv
-from os.path import split
 from os import rename
 
 setup_py_path = argv[1]
@@ -23,7 +22,7 @@ for py_path, pyx_path in zip(py_path_list, pyx_path_list):
 	# use graphics flags for certain files
 	def flags():
 		return ('base_flags'
-			if pyx_path not in ['kivy/core/window/window_pygame.pyx']
+			if pyx_path not in ['kivy/core/window/window_pygame.pyx', 'kivy/core/text/__init__.pyx']
 			else 'merge(base_flags, gl_flags, graphics_flags)')
 
 	# add pyx files to sources list in setup.py
@@ -31,8 +30,6 @@ for py_path, pyx_path in zip(py_path_list, pyx_path_list):
 		setup_py.index('sources = {\n') + 1,
 		("    '{}': " + flags() + ",\n").format(
 			'/'.join(pyx_path.split('/')[1:])))
-
-
 
 with open(setup_py_path, 'w') as setup_py_file:
 	setup_py_file.writelines(setup_py)
