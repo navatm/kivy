@@ -87,15 +87,15 @@ class LabelPygame(LabelBase):
             offset = 1
             
             if self.options['outline']:
-				self._pygame_surface.blit(text, (x + offset, y), None, pygame.BLEND_RGBA_ADD)
-				self._pygame_surface.blit(text, (x + offset, y + offset), None, pygame.BLEND_RGBA_ADD)
-				self._pygame_surface.blit(text, (x, y + offset), None, pygame.BLEND_RGBA_ADD)
-				self._pygame_surface.blit(text, (x - offset, y + offset), None, pygame.BLEND_RGBA_ADD)
-				self._pygame_surface.blit(text, (x - offset, y), None, pygame.BLEND_RGBA_ADD)
-				self._pygame_surface.blit(text, (x - offset, y - offset), None, pygame.BLEND_RGBA_ADD)
-				self._pygame_surface.blit(text, (x, y - offset), None, pygame.BLEND_RGBA_ADD)
+                self._pygame_surface.blit(text, (x + offset, y), None, pygame.BLEND_RGBA_ADD)
+                self._pygame_surface.blit(text, (x + offset, y + offset), None, pygame.BLEND_RGBA_ADD)
+                self._pygame_surface.blit(text, (x, y + offset), None, pygame.BLEND_RGBA_ADD)
+                self._pygame_surface.blit(text, (x - offset, y + offset), None, pygame.BLEND_RGBA_ADD)
+                self._pygame_surface.blit(text, (x - offset, y), None, pygame.BLEND_RGBA_ADD)
+                self._pygame_surface.blit(text, (x - offset, y - offset), None, pygame.BLEND_RGBA_ADD)
+                self._pygame_surface.blit(text, (x, y - offset), None, pygame.BLEND_RGBA_ADD)
             else:
-            	self._pygame_surface.blit(text, (x, y), None, pygame.BLEND_RGBA_ADD)				
+                self._pygame_surface.blit(text, (x, y), None, pygame.BLEND_RGBA_ADD)				
         except pygame.error:
             pass
 
