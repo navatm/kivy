@@ -215,7 +215,7 @@ class Label(Widget):
         tx -= self.center_x - self.texture_size[0] / 2.
         ty -= self.center_y - self.texture_size[1] / 2.
         ty = self.texture_size[1] - ty
-        for uid, zones in self.refs.items():
+        for uid, zones in self.refs.iteritems():
             for zone in zones:
                 x, y, w, h = zone
                 if x <= tx <= w and y <= ty <= h:

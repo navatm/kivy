@@ -339,6 +339,7 @@ Templates
 
     The template usage are now deprecated, please use Dynamic classes instead.
 
+
 Syntax of template
 ~~~~~~~~~~~~~~~~~~
 
