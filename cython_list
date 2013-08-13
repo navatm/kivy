@@ -15,7 +15,6 @@ kivy/core/text/text_pygame.py
 kivy/core/window/window_pygame.py
 kivy/adapters/listadapter.py
 kivy/input/motionevent.py
-kivy/weakmethod.py
 kivy/lang.py
 kivy/vector.py
 kivy/base.py
