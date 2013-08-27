@@ -9,7 +9,6 @@ kivy/uix/floatlayout.py
 kivy/uix/scatter.py
 kivy/uix/togglebutton.py
 kivy/uix/button.py
-kivy/uix/textinput.py
 kivy/core/text/ctext.py
 kivy/core/text/text_pygame.py
 kivy/core/window/window_pygame.py
