@@ -333,6 +333,7 @@ class WindowPygame(WindowBase):
                 # use exception manager first
                 r = ExceptionManager.handle_exception(inst)
                 if r == ExceptionManager.RAISE:
+                    Logger.exception(inst.message)
                     stopTouchApp()
                     raise
                 else:
