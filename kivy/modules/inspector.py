@@ -134,7 +134,7 @@ Builder.load_string('''
     Label:
         id: ltext
         text: [repr(getattr(root.widget, root.key)), root.refresh][0]\
-                if root.widget else ''
+                if root.widget and hasattr(root.widget, root.key) else ''
         text_size: (self.width, None)
 ''')
 
@@ -325,8 +325,10 @@ class Inspector(FloatLayout):
             text = '%s' % key
             node = TreeViewProperty(text=text, key=key, widget_ref=wk_widget)
             node.bind(is_selected=self.show_property)
-            widget.bind(**{key: partial(
-                self.update_node_content, weakref.ref(node))})
+            try:
+                widget.bind(**{key: partial(
+                    self.update_node_content, weakref.ref(node))})
+            except: pass
             treeview.add_node(node)
 
     def update_node_content(self, node, *l):
