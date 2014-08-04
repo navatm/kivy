@@ -20,7 +20,7 @@ do::
 '''
 
 __all__ = ('ButtonBehavior', 'ToggleButtonBehavior', 'DragBehavior',
-           'FocusBehavior', 'CompoundSelectionBehavior')
+           'FocusBehavior', 'CompoundSelectionBehavior', 'HoverBehavior')
 
 from kivy.clock import Clock
 from kivy.properties import OptionProperty, ObjectProperty, NumericProperty,\
@@ -784,6 +784,29 @@ class FocusBehavior(object):
             self.focused = False
             return True
         return False
+
+
+class HoverBehavior(object):
+    '''Implements mouse hover behavior on supported platforms.
+    '''
+    
+    hover = BooleanProperty(False)
+    hover_unsupported_value = BooleanProperty(True)
+    
+    def __init__(self, **kwargs):
+        super(HoverBehavior, self).__init__(**kwargs)
+        if _is_desktop:
+            from kivy.core.window import Window
+            Window.bind(mouse_pos=self.on_mouse_pos)
+        else:
+            self.hover = self.hover_unsupported_value
+    
+    def on_mouse_pos(self, window, pos):
+        pos = self.to_widget(*pos)
+        if not self.hover and self.collide_point(*pos):
+            self.hover = True
+        elif self.hover and not self.collide_point(*pos):
+            self.hover = False
 
 
 class CompoundSelectionBehavior(object):
