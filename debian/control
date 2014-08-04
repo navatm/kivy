@@ -10,7 +10,9 @@ Build-Depends: debhelper (>= 7.0.50~),
                python-all-dev | python-dev, python2.7-dev (>= 2.7),
                cython,
                libgl1-mesa-dev,
-               libgles2-mesa-dev [armel]
+               libgles2-mesa-dev,
+               libgstreamer1.0-dev,
+               libraspberrypi-dev [armhf],
 Standards-Version: 3.9.1
 Homepage: http://kivy.org/
 Vcs-Bzr: https://code.launchpad.net/~kivy-team/kivy/master
@@ -23,7 +25,8 @@ Depends: ${misc:Depends},
          python-docutils,
          python-pygame,
          python-pygments,
-         python-gst0.10
+         python-gobject,
+         gstreamer1.0-x
 Description: Kivy - Multimedia / Multitouch framework in Python
  Kivy is an open source library for developing multi-touch applications. It is
  completely cross platform (Linux/OSX/Win/Android) and released under the terms
