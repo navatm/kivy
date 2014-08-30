@@ -5,7 +5,7 @@ Text Pygame: Draw text with pygame
 __all__ = ('LabelPygame', )
 
 from kivy.compat import PY2
-from kivy.core.text import LabelBase
+from kivy.core.text import LabelBase, TextInputBase
 from kivy.core.image import ImageData
 
 try:
@@ -110,3 +110,7 @@ class LabelPygame(LabelBase):
         del self._pygame_surface
 
         return data
+
+
+class TextInputPygame(TextInputBase):
+    pass

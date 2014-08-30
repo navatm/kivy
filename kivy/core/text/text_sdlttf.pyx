@@ -13,7 +13,7 @@ TODO:
 __all__ = ('LabelSDLttf', )
 
 from kivy.compat import PY2
-from kivy.core.text import LabelBase
+from kivy.core.text import LabelBase, TextInputBase
 from kivy.core.image import ImageData
 from kivy.resources import resource_paths
 from os.path import exists, join
@@ -219,3 +219,7 @@ class LabelSDLttf(LabelBase):
             'rgba', pixels)
         del self._surface
         return data
+
+
+class TextInputSDLttf(TextInputBase):
+    pass

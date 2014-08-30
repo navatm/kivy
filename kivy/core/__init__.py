@@ -36,7 +36,7 @@ def core_select_lib(category, llist, create_instance=False, base='kivy.core'):
     category = category.lower()
     libs_ignored = []
     errs = []
-    for option, modulename, classname in llist:
+    for option, modulename, classnames in llist:
         try:
             # module activated in config ?
             try:
@@ -55,15 +55,25 @@ def core_select_lib(category, llist, create_instance=False, base='kivy.core'):
                 globals=globals(),
                 locals=locals(),
                 fromlist=[modulename], level=0)
-            cls = mod.__getattribute__(classname)
-
-            # ok !
-            Logger.info('{0}: Provider: {1}{2}'.format(
-                category.capitalize(), option,
-                '({0} ignored)'.format(libs_ignored) if libs_ignored else ''))
-            if create_instance:
-                cls = cls()
-            return cls
+            
+            libs = []
+            
+            if isinstance(classnames, basestring):
+                classnames = (classnames,)
+            
+            for classname in classnames:
+                cls = mod.__getattribute__(classname)
+    
+                # ok !
+                Logger.info('{0}: Provider: {1}{2}'.format(
+                    category.capitalize(), option,
+                    '({0} ignored)'.format(libs_ignored) if libs_ignored else ''))
+                if create_instance:
+                    cls = cls()
+                
+                libs.append(cls)
+            
+            return libs if len(libs) > 1 else libs[0]
 
         except ImportError as e:
             errs.append((option, e, sys.exc_info()[2]))

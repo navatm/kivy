@@ -10,7 +10,7 @@ except:
     raise
 
 from kivy.compat import text_type
-from kivy.core.text import LabelBase
+from kivy.core.text import LabelBase, TextInputBase
 from kivy.core.image import ImageData
 
 # used for fetching extends before creature image surface
@@ -60,3 +60,7 @@ class LabelPIL(LabelBase):
         del self._pil_draw
 
         return data
+
+
+class TextInputPIL(TextInputBase):
+    pass

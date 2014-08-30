@@ -181,8 +181,8 @@ def kivy_usage():
 
 #: Global settings options for kivy
 kivy_options = {
-    'window': ('egl_rpi', 'pygame', 'sdl', 'x11', 'sdl2'),
-    'text': ('pil', 'pygame', 'sdlttf', 'sdl2'),
+    'window': ('egl_rpi', 'pygame', 'sdl', 'x11'),
+    'text': ('pil', 'pygame', 'sdlttf', 'sdl2', 'pango'),
     'video': ('gstplayer', 'ffmpeg', 'ffpyplayer', 'gi', 'pygst', 'pyglet',
               'null'),
     'audio': ('gstplayer', 'pygame', 'gi', 'pygst', 'ffpyplayer', 'sdl'),
