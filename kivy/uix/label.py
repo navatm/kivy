@@ -180,7 +180,7 @@ class Label(Widget):
                         'halign', 'valign', 'padding_x', 'padding_y',
                         'text_size', 'shorten', 'mipmap', 'markup',
                         'line_height', 'max_lines', 'strip', 'shorten_from',
-                        'split_str')
+                        'split_str', 'outline')
 
     def __init__(self, **kwargs):
         self._trigger_texture = Clock.create_trigger(self.texture_update, -1)
@@ -681,5 +681,12 @@ class Label(Widget):
     .. versionadded:: 1.9.0
 
     :attr:`strip` is a :class:`~kivy.properties.BooleanProperty` and
+    defaults to False.
+    '''
+
+    outline = BooleanProperty(False)
+    '''Whether to render an outline instead of the actual text.
+
+    :attr:`outline` is a :class:`~kivy.properties.BooleanProperty` and
     defaults to False.
     '''

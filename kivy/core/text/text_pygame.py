@@ -97,8 +97,19 @@ class LabelPygame(LabelBase):
         color[0], color[2] = color[2], color[0]
         try:
             text = font.render(text, True, color)
-            self._pygame_surface.blit(text, (x, y), None,
-                                      pygame.BLEND_RGBA_ADD)
+            blit = self._pygame_surface.blit
+
+            if self.options['outline']:
+                blit(text, (x + 1, y), None, pygame.BLEND_RGBA_ADD)
+                blit(text, (x + 1, y + 1), None, pygame.BLEND_RGBA_ADD)
+                blit(text, (x, y + 1), None, pygame.BLEND_RGBA_ADD)
+                blit(text, (x - 1, y + 1), None, pygame.BLEND_RGBA_ADD)
+                blit(text, (x - 1, y), None, pygame.BLEND_RGBA_ADD)
+                blit(text, (x - 1, y - 1), None, pygame.BLEND_RGBA_ADD)
+                blit(text, (x, y - 1), None, pygame.BLEND_RGBA_ADD)
+                blit(text, (x + 1, y - 1), None, pygame.BLEND_RGBA_ADD)
+            else:
+                blit(text, (x, y), None, pygame.BLEND_RGBA_ADD)
         except pygame.error:
             pass
 

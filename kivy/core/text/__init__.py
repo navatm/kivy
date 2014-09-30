@@ -104,6 +104,8 @@ class LabelBase(object):
         `strip` : bool, defaults to False
             Whether each row of text has its leading and trailing spaces
             stripped. If `halign` is `justify` it is implicitly True.
+        `outline` : bool, defaults to False
+            Render a text outline instead of the text itself.
 
     .. versionchanged:: 1.9.0
         `strip`, `shorten_from`, and `split_str` were added.
@@ -139,14 +141,14 @@ class LabelBase(object):
                  bold=False, italic=False, halign='left', valign='bottom',
                  shorten=False, text_size=None, mipmap=False, color=None,
                  line_height=1.0, strip=False, shorten_from='center',
-                 split_str=' ', **kwargs):
+                 split_str=' ', outline=False, **kwargs):
 
         options = {'text': text, 'font_size': font_size,
                    'font_name': font_name, 'bold': bold, 'italic': italic,
                    'halign': halign, 'valign': valign, 'shorten': shorten,
                    'mipmap': mipmap, 'line_height': line_height,
                    'strip': strip, 'shorten_from': shorten_from,
-                   'split_str': split_str}
+                   'split_str': split_str, 'outline': outline}
 
         options['color'] = color or (1, 1, 1, 1)
         options['padding'] = kwargs.get('padding', (0, 0))
