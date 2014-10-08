@@ -404,10 +404,21 @@ class ScrollView(StencilView):
     to ['content'].
     '''
 
+    paging_increment = NumericProperty(1.)
+    '''Controls the distance a 'page' will scroll. A value of 1 would cause
+    paging to scroll by the size of the ScrollView. A value of 0.5 would cause
+    paging to scroll by half the size of the ScrollView.
+
+    :attr:`paging_increment` is a :class:`~kivy.properties.NumericProperty`
+    and defaults to 1.0.
+    '''
+
     # private, for internal use only
 
     _viewport = ObjectProperty(None, allownone=True)
     _bar_color = ListProperty([0, 0, 0, 0])
+    _paging_distance_x = NumericProperty(0)
+    _paging_distance_y = NumericProperty(0)
 
     def _set_viewport_size(self, instance, value):
         self.viewport_size = value
@@ -823,88 +834,46 @@ class ScrollView(StencilView):
     def _change_bar_color(self, inst, value):
         self._bar_color = value
 
-    _scroll_increment_x = NumericProperty(0)
-    _scroll_increment_y = NumericProperty(0)
-    scroll_increment = NumericProperty(1)
-    '''
-    By default all page methods will scroll a page. Changing
-    this value will increase or decrease the page
+    def _get_paging_distance(self, scroll_size, viewport_size):
+        return (False if scroll_size >= viewport_size
+                else (self.paging_increment * scroll_size))
 
-    Example: set it to 0.5 and all page methods will only page by half.
-    '''
-
-    def _get_scroll_value(self, scroll_value, increment_value):
-        ''' Get the Scroll Value
-        Make sure the new scroll value is not below 0 or
-        above 1.
-        '''
-        new_value = scroll_value + increment_value
-        return min(1.0, max(0.0, new_value))
-
-    def _get_increment(self, size_val, viewport_val):
-        '''
-        Get the Scroll Increment based on the size
-        and viewport size values.
-        '''
-        if size_val < viewport_val:
-            diff = viewport_val - size_val
-            increment = size_val / diff
-            return increment * self.scroll_increment
-        else:
-            return False
-
-    def _set_increment(self):
-        '''
-        Set the Scroll Increment for Paging.
-        '''
+    def _update_paging_distance(self):
         if self.do_scroll_x:
-            increment = self._get_increment(self.width, self._viewport.width)
-            if increment:
-                self._scroll_increment_x = increment
-
+            self._paging_distance_x = self._get_paging_distance(
+                self.width, self._viewport.width) or self._paging_distance_x
         if self.do_scroll_y:
-            increment = self._get_increment(self.height, self._viewport.height)
-            if increment:
-                self._scroll_increment_y = increment
+            self._paging_distance_y = self._get_paging_distance(
+                self.height, self._viewport.height) or self._paging_distance_y
 
     def page_up(self):
-        ''' Page ScrollView up '''
-        self._page('y', 'up')
+        self._page('up')
 
     def page_down(self):
-        ''' Page ScrollView down '''
-        self._page('y', 'down')
+        self._page('down')
 
     def page_left(self):
-        ''' Page ScrollView left '''
-        self._page('x', 'left')
+        self._page('left')
 
     def page_right(self):
-        ''' Page ScrollView right '''
-        self._page('x', 'right')
+        self._page('right')
 
-    def _page(self, coordinate, direction):
-        ''' Page the ScrollView
+    def _page(self, direction):
+        self._update_paging_distance()
+        value, e = 0, None
+        if self.do_scroll_x and direction in ('left', 'right'):
+            value = self._paging_distance_x
+            e = self.effect_x
+        elif self.do_scroll_y and direction in ('up', 'down'):
+            value = self._paging_distance_y
+            e = self.effect_y
 
-        params:
-            coordinate: x or y
-            direction: up, down, left, right
-        '''
-        self._set_increment()
-        if coordinate == 'x':
-            if self.do_scroll_x:
-                if direction == 'left':
-                    value = self._scroll_increment_x * -1
-                else:
-                    value = self._scroll_increment_x
-                self.scroll_x = self._get_scroll_value(self.scroll_x, value)
-        elif coordinate == 'y':
-            if self.do_scroll_y:
-                if direction == 'down':
-                    value = self._scroll_increment_y * -1
-                else:
-                    value = self._scroll_increment_y
-                self.scroll_y = self._get_scroll_value(self.scroll_y, value)
+        if e:
+            e.value = max(e.value - value, e.min) \
+                if direction in ('right', 'up') \
+                else min(e.value + value, e.max)
+            e.velocity = 0
+            e.trigger_velocity_update()
 
     #
     # Private
