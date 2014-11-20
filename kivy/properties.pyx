@@ -412,7 +412,11 @@ cdef class Property:
     cpdef get(self, EventDispatcher obj):
         '''Return the value of the property.
         '''
-        cdef PropertyStorage ps = obj.__storage[self._name]
+        cdef PropertyStorage ps
+        try:
+            ps = obj.__storage[self._name]
+        except KeyError:
+            raise AttributeError(self._name)
         return ps.value
 
     #
@@ -691,7 +695,7 @@ class ObservableDict(dict):
     def __getattr__(self, attr):
         try:
             return self._weak_return(self.__getitem__(attr))
-        except KeyError:
+        except (KeyError, AttributeError):
             return self._weak_return(
                             super(ObservableDict, self).__getattr__(attr))
 
