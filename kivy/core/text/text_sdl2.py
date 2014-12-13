@@ -5,10 +5,10 @@ SDL2 text provider
 Based on SDL2 + SDL2_ttf
 '''
 
-__all__ = ('LabelSDL2', )
+__all__ = ('LabelSDL2', 'TextInputSDL2',)
 
 from kivy.compat import PY2
-from kivy.core.text import LabelBase
+from kivy.core.text import LabelBase, TextInputBase
 from kivy.core.text._text_sdl2 import (_SurfaceContainer, _get_extents,
                                        _get_fontdescent, _get_fontascent)
 
@@ -48,3 +48,6 @@ class LabelSDL2(LabelBase):
     def _render_end(self):
         return self._surface.get_data()
 
+
+class TextInputSDL2(TextInputBase):
+    pass

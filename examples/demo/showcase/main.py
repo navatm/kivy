@@ -1,4 +1,9 @@
 #!/usr/bin/kivy
+import sys
+if 'debug' in sys.argv:
+    import pydevd; pydevd.settrace('localhost', port=13134, suspend=False)
+    sys.argv.remove('debug')
+
 from time import time
 from kivy.app import App
 from os.path import dirname, join

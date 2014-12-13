@@ -152,7 +152,7 @@ from kivy.logger import Logger
 from kivy.metrics import inch
 from kivy.utils import boundary, platform
 
-from kivy.core.text import Label
+from kivy.core.text import Label, TextInput as CoreTextInput, FL_IS_NEWLINE
 from kivy.graphics import Color, Rectangle
 from kivy.graphics.texture import Texture
 
@@ -171,8 +171,6 @@ Cache_get = Cache.get
 Cache_remove = Cache.remove
 Cache_register('textinput.label', timeout=60.)
 Cache_register('textinput.width', timeout=60.)
-
-FL_IS_NEWLINE = 0x01
 
 # late binding
 Clipboard = None
@@ -314,7 +312,7 @@ class TextInputCutCopyPaste(Bubble):
         anim.start(self)
 
 
-class TextInput(Widget):
+class TextInput(CoreTextInput, Widget):
     '''TextInput class. See module documentation for more information.
 
     :Events:
@@ -431,61 +429,6 @@ class TextInput(Widget):
     def on_text_validate(self):
         pass
 
-    def cursor_index(self, cursor=None):
-        '''Return the cursor index in the text/value.
-        '''
-        if not cursor:
-            cursor = self.cursor
-        try:
-            l = self._lines
-            if len(l) == 0:
-                return 0
-            lf = self._lines_flags
-            index, cr = cursor
-            for row in range(cr):
-                if row >= len(l):
-                    continue
-                index += len(l[row])
-                if lf[row] & FL_IS_NEWLINE:
-                    index += 1
-            if lf[cr] & FL_IS_NEWLINE:
-                index += 1
-            return index
-        except IndexError:
-            return 0
-
-    def cursor_offset(self):
-        '''Get the cursor x offset on the current line.
-        '''
-        offset = 0
-        row = self.cursor_row
-        col = self.cursor_col
-        _lines = self._lines
-        if col and row < len(_lines):
-            offset = self._get_text_width(
-                _lines[row][:col], self.tab_width,
-                self._label_cached)
-        return offset
-
-    def get_cursor_from_index(self, index):
-        '''Return the (row, col) of the cursor from text index.
-        '''
-        index = boundary(index, 0, len(self.text))
-        if index <= 0:
-            return 0, 0
-        lf = self._lines_flags
-        l = self._lines
-        i = 0
-        for row in range(len(l)):
-            ni = i + len(l[row])
-            if lf[row] & FL_IS_NEWLINE:
-                ni += 1
-                i += 1
-            if ni >= index:
-                return index - i, row
-            i = ni
-        return index, row
-
     def select_text(self, start, end):
         ''' Select a portion of text displayed in this TextInput.
 
@@ -589,24 +532,6 @@ class TextInput(Widget):
         self.cursor = self.get_cursor_from_index(ci + len_str)
         # handle undo and redo
         self._set_unredo_insert(ci, ci + len_str, substring, from_undo)
-
-    def _get_line_from_cursor(self, start, new_text):
-        # get current paragraph from cursor position
-        finish = start
-        lines = self._lines
-        linesflags = self._lines_flags
-        if start and not linesflags[start]:
-            start -= 1
-            new_text = u''.join((lines[start], new_text))
-        try:
-            while not linesflags[finish + 1]:
-                new_text = u''.join((new_text, lines[finish + 1]))
-                finish += 1
-        except IndexError:
-            pass
-        lines, lineflags = self._split_smart(new_text)
-        len_lines = max(1, len(lines))
-        return start, finish, lines, lineflags, len_lines
 
     def _set_unredo_insert(self, ci, sci, substring, from_undo):
         # handle undo and redo
@@ -748,81 +673,6 @@ class TextInput(Widget):
             'redo_command': ol_index})
         #reset redo when undo is appended to
         self._redo = []
-
-    def do_cursor_movement(self, action):
-        '''Move the cursor relative to it's current position.
-        Action can be one of :
-
-            - cursor_left: move the cursor to the left
-            - cursor_right: move the cursor to the right
-            - cursor_up: move the cursor on the previous line
-            - cursor_down: move the cursor on the next line
-            - cursor_home: move the cursor at the start of the current line
-            - cursor_end: move the cursor at the end of current line
-            - cursor_pgup: move one "page" before
-            - cursor_pgdown: move one "page" after
-
-        '''
-        pgmove_speed = int(self.height /
-            (self.line_height + self.line_spacing) - 1)
-        col, row = self.cursor
-        if action == 'cursor_up':
-            row = max(row - 1, 0)
-            col = min(len(self._lines[row]), col)
-        elif action == 'cursor_down':
-            row = min(row + 1, len(self._lines) - 1)
-            col = min(len(self._lines[row]), col)
-        elif action == 'cursor_left':
-            if col == 0:
-                if row:
-                    row -= 1
-                    col = len(self._lines[row])
-            else:
-                col, row = col - 1, row
-        elif action == 'cursor_right':
-            if col == len(self._lines[row]):
-                if row < len(self._lines) - 1:
-                    col = 0
-                    row += 1
-            else:
-                col, row = col + 1, row
-        elif action == 'cursor_home':
-            col = 0
-        elif action == 'cursor_end':
-            col = len(self._lines[row])
-        elif action == 'cursor_pgup':
-            row = max(0, row - pgmove_speed)
-            col = min(len(self._lines[row]), col)
-        elif action == 'cursor_pgdown':
-            row = min(row + pgmove_speed, len(self._lines) - 1)
-            col = min(len(self._lines[row]), col)
-        self.cursor = (col, row)
-
-    def get_cursor_from_xy(self, x, y):
-        '''Return the (row, col) of the cursor from an (x, y) position.
-        '''
-        padding_left = self.padding[0]
-        padding_top = self.padding[1]
-        l = self._lines
-        dy = self.line_height + self.line_spacing
-        cx = x - self.x
-        scrl_y = self.scroll_y
-        scrl_x = self.scroll_x
-        scrl_y = scrl_y / dy if scrl_y > 0 else 0
-        cy = (self.top - padding_top + scrl_y * dy) - y
-        cy = int(boundary(round(cy / dy - 0.5), 0, len(l) - 1))
-        dcx = 0
-        _get_text_width = self._get_text_width
-        _tab_width = self.tab_width
-        _label_cached = self._label_cached
-        for i in range(1, len(l[cy]) + 1):
-            if _get_text_width(l[cy][:i],
-                               _tab_width,
-                               _label_cached) + padding_left >= cx + scrl_x:
-                break
-            dcx = i
-        cx = dcx
-        return cx, cy
 
     #
     # Selection control
@@ -1771,24 +1621,6 @@ class TextInput(Widget):
         self._refresh_hint_text()
         self.scroll_x = self.scroll_y = 0
 
-    def _get_cursor_pos(self):
-        # return the current cursor x/y from the row/col
-        dy = self.line_height + self.line_spacing
-        padding_left = self.padding[0]
-        padding_top = self.padding[1]
-        left = self.x + padding_left
-        top = self.top - padding_top
-        y = top + self.scroll_y
-        y -= self.cursor_row * dy
-        x, y = left + self.cursor_offset() - self.scroll_x, y
-        if x < left:
-            self.scroll_x = 0
-            x = left
-        if y > top:
-            y = top
-            self.scroll_y = 0
-        return x, y
-
     def _get_line_options(self):
         # Get or create line options, to be used for Label creation
         if self._line_options is None:
@@ -2099,8 +1931,6 @@ class TextInput(Widget):
     # Properties
     #
 
-    _lines = ListProperty([])
-    _hint_text_lines = ListProperty([])
     _editable = BooleanProperty(True)
     _insert_int_patu = re.compile(u'[^0-9]')
     _insert_int_patb = re.compile(b'[^0-9]')
@@ -2149,90 +1979,6 @@ class TextInput(Widget):
 
     :attr:`cursor_blink` is a :class:`~kivy.properties.BooleanProperty` and
     defaults to False.
-    '''
-
-    def _get_cursor(self):
-        return self._cursor
-
-    def _set_cursor(self, pos):
-        if not self._lines:
-            self._trigger_refresh_text()
-            return
-        l = self._lines
-        cr = boundary(pos[1], 0, len(l) - 1)
-        cc = boundary(pos[0], 0, len(l[cr]))
-        cursor = cc, cr
-        if self._cursor == cursor:
-            return
-
-        self._cursor = cursor
-
-        # adjust scrollview to ensure that the cursor will be always inside our
-        # viewport.
-        padding_left = self.padding[0]
-        padding_right = self.padding[2]
-        viewport_width = self.width - padding_left - padding_right
-        sx = self.scroll_x
-        offset = self.cursor_offset()
-
-        # if offset is outside the current bounds, reajust
-        if offset > viewport_width + sx:
-            self.scroll_x = offset - viewport_width
-        if offset < sx:
-            self.scroll_x = offset
-
-        # do the same for Y
-        # this algo try to center the cursor as much as possible
-        dy = self.line_height + self.line_spacing
-        offsety = cr * dy
-        sy = self.scroll_y
-        padding_top = self.padding[1]
-        padding_bottom = self.padding[3]
-        viewport_height = self.height - padding_top - padding_bottom - dy
-        if offsety > viewport_height + sy:
-            sy = offsety - viewport_height
-        if offsety < sy:
-            sy = offsety
-        self.scroll_y = sy
-
-        return True
-
-    cursor = AliasProperty(_get_cursor, _set_cursor)
-    '''Tuple of (row, col) values indicating the current cursor position.
-    You can set a new (row, col) if you want to move the cursor. The scrolling
-    area will be automatically updated to ensure that the cursor is
-    visible inside the viewport.
-
-    :attr:`cursor` is an :class:`~kivy.properties.AliasProperty`.
-    '''
-
-    def _get_cursor_col(self):
-        return self._cursor[0]
-
-    cursor_col = AliasProperty(_get_cursor_col, None, bind=('cursor', ))
-    '''Current column of the cursor.
-
-    :attr:`cursor_col` is an :class:`~kivy.properties.AliasProperty` to
-    cursor[0], read-only.
-    '''
-
-    def _get_cursor_row(self):
-        return self._cursor[1]
-
-    cursor_row = AliasProperty(_get_cursor_row, None, bind=('cursor', ))
-    '''Current row of the cursor.
-
-    :attr:`cursor_row` is an :class:`~kivy.properties.AliasProperty` to
-    cursor[1], read-only.
-    '''
-
-    cursor_pos = AliasProperty(_get_cursor_pos, None, bind=(
-        'cursor', 'padding', 'pos', 'size', 'focus',
-        'scroll_x', 'scroll_y'))
-    '''Current position of the cursor, in (x, y).
-
-    :attr:`cursor_pos` is an :class:`~kivy.properties.AliasProperty`,
-    read-only.
     '''
 
     cursor_color = ListProperty([1, 0, 0, 1])

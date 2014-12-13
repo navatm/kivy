@@ -138,6 +138,8 @@ class LabelBase(object):
 
     _texture_1px = None
 
+    layout_text = staticmethod(layout_text)
+
     def __init__(self, text='', font_size=12, font_name=DEFAULT_FONT,
                  bold=False, italic=False, halign='left', valign='bottom',
                  shorten=False, text_size=None, mipmap=False, color=None,
@@ -404,16 +406,28 @@ class LabelBase(object):
         if not options:  # there was no text to render
             self._render_begin()
             data = self._render_end()
-            assert(data)
+            assert (data)
             if data is not None and data.width > 1:
                 self.texture.blit_data(data)
             return
 
+        self._render_lines(lines, options)
+
+        # get data from provider
+        data = self._render_end()
+        assert (data)
+
+        # If the text is 1px width, usually, the data is black.
+        # Don't blit that kind of data, otherwise, you have a little black bar.
+        if data is not None and data.width > 1:
+            self.texture.blit_data(data)
+
+    def _render_lines(self, lines, options):
         render_text = self._render_text
         get_extents = self.get_cached_extents()
         uw, uh = options['text_size']
         xpad, ypad = options['padding_x'], options['padding_y']
-        x, y = xpad, ypad   # pos in the texture
+        x, y = xpad, ypad  # pos in the texture
         iw, ih = self._internal_size  # the real size of text, not texture
         if uw is not None:
             uww = uw - 2 * xpad  # real width of just text
@@ -481,14 +495,33 @@ class LabelBase(object):
                 render_text(line, x, y)
             y += lh
 
-        # get data from provider
-        data = self._render_end()
-        assert(data)
-
-        # If the text is 1px width, usually, the data is black.
-        # Don't blit that kind of data, otherwise, you have a little black bar.
-        if data is not None and data.width > 1:
-            self.texture.blit_data(data)
+    def layout_text_aligned(self, lines, options, text, uh, uw):
+        if uh is not None and options['valign'][-1] == 'e':  # middle
+            center = -1  # pos of newline
+            if len(text) > 1:
+                middle = int(len(text) // 2)
+                l, r = text.rfind('\n', 0, middle), text.find('\n', middle)
+                if l != -1 and r != -1:
+                    center = l if center - l <= r - center else r
+                elif l != -1:
+                    center = l
+                elif r != -1:
+                    center = r
+            # if a newline split text, render from center down and up til uh
+            if center != -1:
+                # layout from center down until half uh
+                w, h, clipped = self.layout_text(text[center + 1:], lines, (0, 0),
+                                                 (uw, uh / 2), options, self.get_cached_extents(), True, True)
+                # now layout from center upwards until uh is reached
+                w, h, clipped = self.layout_text(text[:center + 1], lines, (w, h),
+                                                 (uw, uh), options, self.get_cached_extents(), False, True)
+            else:  # if there's no new line, layout everything
+                w, h, clipped = self.layout_text(text, lines, (0, 0), (uw, None),
+                                                 options, self.get_cached_extents(), True, True)
+        else:  # top or bottom
+            w, h, clipped = self.layout_text(text, lines, (0, 0), (uw, uh), options,
+                                             self.get_cached_extents(), options['valign'][-1] == 'p', True)
+        return w, h
 
     def render(self, real=False):
         '''Return a tuple (width, height) to create the image
@@ -519,31 +552,7 @@ class LabelBase(object):
 
         ostrip = options['strip']
         strip = options['strip'] = True
-        if uh is not None and options['valign'][-1] == 'e':  # middle
-            center = -1  # pos of newline
-            if len(text) > 1:
-                middle = int(len(text) // 2)
-                l, r = text.rfind('\n', 0, middle), text.find('\n', middle)
-                if l != -1 and r != -1:
-                    center = l if center - l <= r - center else r
-                elif l != -1:
-                    center = l
-                elif r != -1:
-                    center = r
-            # if a newline split text, render from center down and up til uh
-            if center != -1:
-                # layout from center down until half uh
-                w, h, clipped = layout_text(text[center + 1:], lines, (0, 0),
-                (uw, uh / 2), options, self.get_cached_extents(), True, True)
-                # now layout from center upwards until uh is reached
-                w, h, clipped = layout_text(text[:center + 1], lines, (w, h),
-                (uw, uh), options, self.get_cached_extents(), False, True)
-            else:  # if there's no new line, layout everything
-                w, h, clipped = layout_text(text, lines, (0, 0), (uw, None),
-                options, self.get_cached_extents(), True, True)
-        else:  # top or bottom
-            w, h, clipped = layout_text(text, lines, (0, 0), (uw, uh), options,
-                self.get_cached_extents(), options['valign'][-1] == 'p', True)
+        w, h = self.layout_text_aligned(lines, options, text, uh, uw)
         options['strip'] = ostrip
         self._internal_size = w, h
         if uw:
@@ -765,12 +774,9 @@ class TextInputBase(EventDispatcher):
             - cursor_pgup: move one "page" before
             - cursor_pgdown: move one "page" after
     
-        .. warning::
-    
-            Current page has three lines before/after.
-    
         '''
-        pgmove_speed = 3
+        pgmove_speed = int(self.height /
+                           (self.line_height + self.line_spacing) - 1)
         col, row = self.cursor
         if action == 'cursor_up':
             row = max(row - 1, 0)
@@ -797,11 +803,10 @@ class TextInputBase(EventDispatcher):
         elif action == 'cursor_end':
             col = len(self._lines[row])
         elif action == 'cursor_pgup':
-            row /= pgmove_speed
+            row = max(0, row - pgmove_speed)
             col = min(len(self._lines[row]), col)
         elif action == 'cursor_pgdown':
-            row = min((row + 1) * pgmove_speed,
-                      len(self._lines) - 1)
+            row = min(row + pgmove_speed, len(self._lines) - 1)
             col = min(len(self._lines[row]), col)
         self.cursor = (col, row)
 
@@ -941,7 +946,7 @@ class TextInputBase(EventDispatcher):
 Label, TextInput = core_select_lib('text', (
     ('pango', 'text_pango', ('LabelPango', 'TextInputPango')),
     ('pygame', 'text_pygame', ('LabelPygame', 'TextInputPygame')),
-    ('sdl2', 'text_sdl2', ('LabelSDL2', 'TextInputSDL2'),
+    ('sdl2', 'text_sdl2', ('LabelSDL2', 'TextInputSDL2')),
     ('sdlttf', 'text_sdlttf', ('LabelSDLttf', 'TextInputSDLttf')),
     ('pil', 'text_pil', ('LabelPIL', 'TextInputPIL')),
 ))
