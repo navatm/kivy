@@ -9,34 +9,39 @@ from kivy.core.image import ImageData
 __all__ = ('LabelPango',)
 
 try:
-    import pango
-    import cairo
-    import pangocairo
+    # import pango
+    # import cairo
+    # import pangocairo
+    from gi.repository import Pango
+    from gi.repository import PangoFT2
+    from gi.repository import freetype2
 except:
     raise
 
 from kivy.core.text import LabelBase, TextInputBase
 from kivy.core.text.text_layout import LayoutWord, LayoutLine
 
-font_map = pangocairo.cairo_font_map_get_default()
-families = font_map.list_families()
+# font_map = pangocairo.cairo_font_map_get_default()
+# families = font_map.list_families()
 
 class LabelPango(LabelBase):
     
     def __init__(self, **kwargs):
         super(LabelPango, self).__init__(**kwargs)
-        temp_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 0, 0)
+        # temp_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 0, 0)
         # font_options = cairo.FontOptions()
         # font_options.set_antialias(cairo.ANTIALIAS_NONE)
         # font_options.set_hint_style(cairo.HINT_STYLE_FULL)
         # font_options.set_hint_metrics(cairo.HINT_METRICS_ON)
-        self.context = cairo.Context(temp_surface)
+        self.fontmap = PangoFT2.FontMap.new()
+        self.context = self.fontmap.create_context()
+        # self.context = cairo.Context(temp_surface)
         # self.context.set_antialias(cairo.ANTIALIAS_NONE)
         # self.context.set_font_options(font_options)
-        self.pangocairo_context = pangocairo.CairoContext(self.context)
+        # self.pangocairo_context = pangocairo.CairoContext(self.context)
         # self.pangocairo_context.set_antialias(cairo.ANTIALIAS_NONE)
         # self.pangocairo_context.set_font_options(font_options)
-        del temp_surface
+        # del temp_surface
 
     def _get_font_id(self, options=None, debug=False):
         opt = options or self.options
@@ -47,7 +52,7 @@ class LabelPango(LabelBase):
         return retu
     
     def _get_font(self, options=None, debug=False):
-        return pango.FontDescription(self._get_font_id(options, debug))
+        return Pango.FontDescription(self._get_font_id(options, debug))
     
     def get_extents(self, text):
         font = self._get_font()
@@ -55,12 +60,13 @@ class LabelPango(LabelBase):
         # context = cairo.Context(surface)
         context = self.context
         # pangocairo_context = pangocairo.CairoContext(context)
-        pangocairo_context = self.pangocairo_context
+        # pangocairo_context = self.pangocairo_context
         # pangocairo_context.set_antialias(cairo.ANTIALIAS_DEFAULT)
-        layout = pangocairo_context.create_layout()
+        # layout = pangocairo_context.create_layout()
+        layout = Pango.Layout(context)
         layout.set_font_description(font)
         layout.set_text(text)
-        pangocairo_context.update_layout(layout)
+        # pangocairo_context.update_layout(layout)
         extents = layout.get_pixel_extents()
         logical = extents[1]
         size = logical[2] - logical[0], logical[3] - logical[1]
@@ -87,39 +93,38 @@ class LabelPango(LabelBase):
             self.texture.blit_data(data)
     
     def _render_begin(self):
-        self.render_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *self._size)
+        # self.render_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *self._size)
         # font_options = cairo.FontOptions()
         # font_options.set_antialias(cairo.ANTIALIAS_NONE)
         # font_options.set_hint_style(cairo.HINT_STYLE_FULL)
         # font_options.set_hint_metrics(cairo.HINT_METRICS_ON)
-        self.render_context = cairo.Context(self.render_surface)
+        # self.render_context = cairo.Context(self.render_surface)
         # self.render_context.set_antialias(cairo.ANTIALIAS_NONE)
         # self.render_context.set_font_options(font_options)
-        self.render_pangocairo_context = pangocairo.CairoContext(self.render_context)
+        # self.render_pangocairo_context = pangocairo.CairoContext(self.render_context)
         # self.render_pangocairo_context.set_antialias(cairo.ANTIALIAS_NONE)
         # self.render_pangocairo_context.set_font_options(font_options)
+        pass
 
     def _render_lines(self, lines, options):
         self._render_begin()
-        context = self.render_context
-        pangocairo_context = self.render_pangocairo_context
+        # context = self.render_context
+        # pangocairo_context = self.render_pangocairo_context
         # twidth, theight = self._size
         
         line = lines[0]
         layout, lineoptions = line.words
         
-        context.translate(line.x, line.y)
-        print 'color:', lineoptions['color']
-        context.set_source_rgba(*lineoptions['color'])
-        # font_options = cairo.FontOptions()
-        # font_options.set_antialias(cairo.ANTIALIAS_NONE)
-        # font_options.set_hint_style(cairo.HINT_STYLE_FULL)
-        # font_options.set_hint_metrics(cairo.HINT_METRICS_ON)
-        # context.set_font_options(font_options)
-        # pangocairo_context.set_font_options(font_options)
-        pangocairo_context.update_layout(layout)
-        pangocairo_context.show_layout(layout)
-        context.translate(-line.x, -line.y)
+        # context.translate(line.x, line.y)
+        # print 'color:', lineoptions['color']
+        # context.set_source_rgba(*lineoptions['color'])
+        # pangocairo_context.update_layout(layout)
+        # pangocairo_context.show_layout(layout)
+        # context.translate(-line.x, -line.y)
+        
+        extent_ink, extent_logical = layout.get_pixel_extents()
+        bitmap = freetype2.Bitmap
+        
         
         # for layout, lineoptions, clip in lines:
         # 	y = 0
