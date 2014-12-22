@@ -65,10 +65,10 @@ from kivy.compat import PY2
 
 if PY2:
     from httplib import HTTPConnection
-    from urlparse import urlparse
+    from urlparse import urlparse, urlunparse
 else:
     from http.client import HTTPConnection
-    from urllib.parse import urlparse
+    from urllib.parse import urlparse, urlunparse
 
 try:
     HTTPSConnection = None
@@ -262,16 +262,6 @@ class UrlRequest(Thread):
             port = int(host[1])
         host = host[0]
 
-        # create connection instance
-        args = {}
-        if timeout is not None:
-            args['timeout'] = timeout
-        if self._proxy_host:
-            req = cls(self._proxy_host, self._proxy_port, **args)
-            req.set_tunnel(host, port, self._proxy_headers)
-        else:
-            req = cls(host, port, **args)
-
         # reconstruct path to pass on the request
         path = parse.path
         if parse.params:
@@ -280,6 +270,22 @@ class UrlRequest(Thread):
             path += '?' + parse.query
         if parse.fragment:
             path += '#' + parse.fragment
+
+        # create connection instance
+        args = {}
+        if timeout is not None:
+            args['timeout'] = timeout
+        if self._proxy_host:
+            Logger.debug('UrlRequest: {0} - proxy via {1}:{2}'.format(
+                id(self), self._proxy_host, self._proxy_port
+            ))
+            req = cls(self._proxy_host, self._proxy_port, **args)
+            if parse.scheme == 'https':
+                req.set_tunnel(host, port, self._proxy_headers)
+            else:
+                path = urlunparse(parse)
+        else:
+            req = cls(host, port, **args)
 
         # send request
         method = self._method
