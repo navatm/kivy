@@ -139,6 +139,14 @@ class UrlRequest(Thread):
         `file_path`: str, defaults to None
             If set, the result of the UrlRequest will be written to this path
             instead of in memory.
+        `proxy_host`: str, defaults to None
+            If set, the proxy host to use for this connection.
+        `proxy_port`: int, defaults to None
+            If set, and `proxy_host` is also set, the port to use for
+            connecting to the proxy server.
+        `proxy_headers`: dict, defaults to None
+            If set, and `proxy_host` is also set, the headers to send to the
+            proxy server in the ``CONNECT`` request.
 
     .. versionchanged:: 1.8.0
 
@@ -147,13 +155,18 @@ class UrlRequest(Thread):
         Parameter `on_redirect` added.
         Parameter `on_failure` added.
 
+    .. versionchanged:: 1.9.0
+
+        Parameters `proxy_host`, `proxy_port` and `proxy_headers` added.
+
     '''
 
     def __init__(self, url, on_success=None, on_redirect=None,
                  on_failure=None, on_error=None, on_progress=None,
                  req_body=None, req_headers=None, chunk_size=8192,
                  timeout=None, method=None, decode=True, debug=False,
-                 file_path=None):
+                 file_path=None, proxy_host=None, proxy_port=None,
+                 proxy_headers=None):
         super(UrlRequest, self).__init__()
         self._queue = deque()
         self._trigger_result = Clock.create_trigger(self._dispatch_result, 0)
@@ -175,6 +188,9 @@ class UrlRequest(Thread):
         self._chunk_size = chunk_size
         self._timeout = timeout
         self._method = method
+        self._proxy_host = proxy_host
+        self._proxy_port = proxy_port
+        self._proxy_headers = proxy_headers
 
         #: Url of the request
         self.url = url
@@ -250,7 +266,11 @@ class UrlRequest(Thread):
         args = {}
         if timeout is not None:
             args['timeout'] = timeout
-        req = cls(host, port, **args)
+        if self._proxy_host:
+            req = cls(self._proxy_host, self._proxy_port, **args)
+            req.set_tunnel(host, port, self._proxy_headers)
+        else:
+            req = cls(host, port, **args)
 
         # reconstruct path to pass on the request
         path = parse.path
