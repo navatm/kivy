@@ -50,7 +50,9 @@ class ClipboardPygame(ClipboardBase):
         if not self._types:
             self.init()
             types = pygame.scrap.get_types()
-            for mime, pygtype in self._aliases.items():
+            for mime, pygtype in self._aliases.items()[:]:
+                if mime in types:
+                    del self._aliases[mime]
                 if pygtype in types:
                     types.append(mime)
             self._types = types
