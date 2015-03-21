@@ -43,6 +43,7 @@ class ClipboardPygame(ClipboardBase):
         self.init()
         if platform in ('linux', 'macosx') and data.endswith('\x00'):
             data = data[:-1]
+        mimetype = self._aliases.get(mimetype, mimetype)
         pygame.scrap.put(mimetype, data)
 
     def get_types(self):

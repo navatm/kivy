@@ -91,7 +91,9 @@ class ClipboardBase(object):
         # so as to avoid putting spurious data after the end.
         # MS windows issue.
         self._ensure_clipboard()
-        data = data.encode(self._encoding) + b'\x00'
+        if isinstance(data, unicode):
+            data = data.encode(self._encoding)
+        data += b'\x00'
         self.put(data, self._clip_mime_type)
 
     def _paste(self):
@@ -107,7 +109,8 @@ class ClipboardBase(object):
             # decode only if we don't have unicode
             # we would still need to decode from utf-16 (windows)
             # data is of type bytes in PY3
-            data = data.decode(self._encoding, 'ignore')
+            if isinstance(data, bytes):
+                data = data.decode(self._encoding, 'ignore')
             # remove null strings mostly a windows issue
             data = data.replace(u'\x00', u'')
             return data
