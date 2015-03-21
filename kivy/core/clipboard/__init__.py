@@ -62,7 +62,7 @@ class ClipboardBase(object):
             # windows clipboard uses a utf-16 encoding
             self._encoding = 'utf-16'
         elif platform == 'linux':
-            self._clip_mime_type = 'UTF8_STRING'
+            self._clip_mime_type = 'text/plain;charset=utf-8'
             self._encoding = 'utf-8'
         else:
             self._clip_mime_type = 'text/plain'
@@ -130,6 +130,8 @@ elif platform == 'linux':
         ('xsel', 'clipboard_xsel', 'Clipboardxsel'))
     _clipboards.append(
         ('dbusklipper', 'clipboard_dbusklipper', 'ClipboardDbusKlipper'))
+    _clipboards.append(
+        ('gtk3', 'clipboard_gtk3', 'ClipboardGtk3'))
 
 if USE_SDL2:
     _clipboards.append(
