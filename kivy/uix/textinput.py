@@ -1072,7 +1072,7 @@ class TextInput(FocusBehavior, Widget):
         if action == 'cursor_up':
             if control:
                 self.scroll_y = max(0, self.scroll_y - self.line_height)
-            elif not self.readonly and alt:
+            elif not self.readonly and self.multiline and alt:
                 self._shift_lines(-1)
                 return
             else:
@@ -1082,7 +1082,7 @@ class TextInput(FocusBehavior, Widget):
             if control:
                 maxy = self.minimum_height - self.height
                 self.scroll_y = max(0, min(maxy, self.scroll_y + self.line_height))
-            elif not self.readonly and alt:
+            elif not self.readonly and self.multiline and alt:
                 self._shift_lines(1)
                 return
             else:
