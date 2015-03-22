@@ -36,8 +36,8 @@ class ClipboardGtk3(ClipboardBase):
     def put(self, data, mimetype='text/plain;charset=utf-8'):
         self.init()
         if mimetype == 'text/plain;charset=utf-8':
-            text = data if isinstance(data, bytes) else data.encode('utf8')
-            clipboard.set_text(text, len(text))
+            text = data.decode(self._encoding)
+            clipboard.set_text(text, -1)
     
     def get_types(self):
         self.init()
